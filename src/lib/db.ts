@@ -168,10 +168,6 @@ export const db = {
   async deleteOrder(id: string) {
     if (supabase) fail((await supabase.from(T.orders).delete().eq('id', id)).error)
   },
-  async moveStock(items: OrderItem[], sign: 1 | -1) {
-    if (!supabase) return
-    for (const i of items) fail((await supabase.rpc('armurerie_adjust_stock', { p_id: i.productId, p_delta: sign * i.qty })).error)
-  },
   async saveSettings(s: Settings) {
     if (supabase) fail((await supabase.from(T.settings).upsert({ id: 1, shop_name: s.shopName, town: s.town, tax_pct: s.taxPct })).error)
   },

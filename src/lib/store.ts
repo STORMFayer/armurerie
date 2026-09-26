@@ -51,15 +51,6 @@ interface State {
   resetAll: () => void
 }
 
-/** Applique ±qty au stock des produits concernés (les services à stock null sont ignorés). */
-function moveStock(products: Product[], items: OrderItem[], sign: 1 | -1): Product[] {
-  return products.map((p) => {
-    if (p.stock === null) return p
-    const qty = items.filter((i) => i.productId === p.id).reduce((s, i) => s + i.qty, 0)
-    return qty ? { ...p, stock: Math.max(0, p.stock + sign * qty) } : p
-  })
-}
-
 const DEFAULT_SETTINGS: Settings = { shopName: 'Armurerie de Valentine', town: 'Valentine, New Hanover', taxPct: 0 }
 
 const initial = () => ({
@@ -176,11 +167,9 @@ export const useStore = create<State>()(
           const saved = await db.insertOrder(rest)
           if (!saved) return null
           order = saved
-          db.moveStock(order.items, -1)
         }
         set((s) => ({
           orders: [order, ...s.orders.filter((o) => o.id !== order.id)],
-          products: moveStock(s.products, order.items, -1),
           nextOrderNumber: Math.max(s.nextOrderNumber, order.number + 1),
           cart: emptyCart(),
         }))
@@ -190,28 +179,16 @@ export const useStore = create<State>()(
       setOrderStatus: (id, status) => {
         const order = get().orders.find((o) => o.id === id)
         if (!order || order.status === status) return
-        let sign: 1 | -1 | 0 = 0
-        if (status === 'annulee') sign = 1
-        else if (order.status === 'annulee') sign = -1
         const becomesPaid = order.status === 'en_attente' && (status === 'payee' || status === 'livree')
         const updated: Order = { ...order, status, ...(becomesPaid && !order.received ? { received: order.total } : {}) }
-        set((s) => ({
-          products: sign ? moveStock(s.products, order.items, sign) : s.products,
-          orders: s.orders.map((o) => (o.id === id ? updated : o)),
-        }))
+        set((s) => ({ orders: s.orders.map((o) => (o.id === id ? updated : o)) }))
         db.updateOrder(id, { status, received: updated.received })
-        if (sign) db.moveStock(order.items, sign)
       },
       deleteOrder: (id) => {
         const order = get().orders.find((o) => o.id === id)
         if (!order) return
-        const restock = order.status !== 'annulee'
-        set((s) => ({
-          orders: s.orders.filter((o) => o.id !== id),
-          products: restock ? moveStock(s.products, order.items, 1) : s.products,
-        }))
+        set((s) => ({ orders: s.orders.filter((o) => o.id !== id) }))
         db.deleteOrder(id)
-        if (restock) db.moveStock(order.items, 1)
       },
 
       saveSettings: (patch) => {

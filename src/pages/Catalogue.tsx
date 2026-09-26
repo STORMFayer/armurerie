@@ -4,22 +4,20 @@ import { toast } from 'sonner'
 import { Button, Field, Modal, Panel, useConfirm } from '@/components/ui'
 import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, type Product } from '@/lib/types'
-import { cn, money, toNum } from '@/lib/utils'
+import { money, toNum } from '@/lib/utils'
 
 function ProductForm({ product, onDone }: { product?: Product; onDone: () => void }) {
   const saveProduct = useStore((s) => s.saveProduct)
   const [name, setName] = useState(product?.name ?? '')
   const [category, setCategory] = useState<Category>(product?.category ?? 'Revolvers')
   const [price, setPrice] = useState(product ? String(product.price) : '')
-  const [unlimited, setUnlimited] = useState(product ? product.stock === null : false)
-  const [stock, setStock] = useState(product?.stock != null ? String(product.stock) : '0')
   const [image, setImage] = useState(product?.image ?? '')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return toast.error('Donnez un nom à l’article.')
     if (toNum(price) <= 0) return toast.error('Le prix doit être supérieur à zéro.')
-    saveProduct({ id: product?.id, name: name.trim(), category, price: toNum(price), stock: unlimited ? null : Math.floor(toNum(stock)), image: /^(https?:\/\/|img\/)/.test(image.trim()) ? image.trim() : undefined })
+    saveProduct({ id: product?.id, name: name.trim(), category, price: toNum(price), stock: null, image: /^(https?:\/\/|img\/)/.test(image.trim()) ? image.trim() : undefined })
     toast.success(product ? 'Article modifié.' : 'Article ajouté au catalogue.')
     onDone()
   }
@@ -41,15 +39,6 @@ function ProductForm({ product, onDone }: { product?: Product; onDone: () => voi
           <input className="field" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
         </Field>
       </div>
-      <div className="grid items-end gap-3 sm:grid-cols-2">
-        <Field label="Stock">
-          <input className="field" inputMode="numeric" disabled={unlimited} value={unlimited ? '' : stock} onChange={(e) => setStock(e.target.value)} />
-        </Field>
-        <label className="flex cursor-pointer items-center gap-2 pb-2 text-ink">
-          <input type="checkbox" className="size-4 accent-[#a8171c]" checked={unlimited} onChange={(e) => setUnlimited(e.target.checked)} />
-          Stock illimité (service)
-        </label>
-      </div>
       <Field label="Image (URL, optionnel)" hint="Lien direct vers une image (ex. Discord / Imgur). Vide = illustration automatique.">
         <input className="field" value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://…" maxLength={500} />
       </Field>
@@ -66,7 +55,7 @@ function ProductForm({ product, onDone }: { product?: Product; onDone: () => voi
 }
 
 export default function Catalogue() {
-  const { products, deleteProduct, saveProduct } = useStore()
+  const { products, deleteProduct } = useStore()
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
   const { ask, dialog } = useConfirm()
 
@@ -79,7 +68,7 @@ export default function Catalogue() {
 
   return (
     <Panel
-      title="Catalogue & réserve"
+      title="Catalogue"
       icon={<Crosshair />}
       actions={
         <Button variant="blood" onClick={() => setEditing('new')}>
@@ -101,23 +90,6 @@ export default function Catalogue() {
                       <tr key={p.id}>
                         <td className="text-lg">{p.name}</td>
                         <td className="w-28 text-right font-type text-blood">{money(p.price)}</td>
-                        <td className="w-44">
-                          {p.stock === null ? (
-                            <span className="font-type text-sm text-sepia">illimité</span>
-                          ) : (
-                            <div className="flex items-center justify-end gap-1">
-                              <button className="cursor-pointer px-1.5 text-sepia hover:text-blood" onClick={() => saveProduct({ ...p, stock: Math.max(0, p.stock! - 1) })} aria-label="Retirer 1">
-                                −
-                              </button>
-                              <span className={cn('w-16 text-center font-type', p.stock === 0 ? 'text-blood' : p.stock <= 2 ? 'text-[#9a6a12]' : 'text-ink')}>
-                                {p.stock === 0 ? 'épuisé' : p.stock}
-                              </span>
-                              <button className="cursor-pointer px-1.5 text-sepia hover:text-sage" onClick={() => saveProduct({ ...p, stock: p.stock! + 1 })} aria-label="Ajouter 1">
-                                +
-                              </button>
-                            </div>
-                          )}
-                        </td>
                         <td className="w-20 text-right whitespace-nowrap">
                           <button className="cursor-pointer p-1.5 text-sepia hover:text-ink" onClick={() => setEditing(p)} aria-label="Modifier">
                             <Pencil size={16} />

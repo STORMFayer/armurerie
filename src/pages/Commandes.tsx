@@ -27,7 +27,7 @@ export default function Commandes() {
   const pendingTotal = orders.filter((o) => o.status === 'en_attente').reduce((s, o) => s + o.total, 0)
 
   async function remove(o: Order) {
-    if (await ask(`Supprimer définitivement la commande ${orderNo(o.number)} ? Le stock sera restitué.`)) {
+    if (await ask(`Supprimer définitivement la commande ${orderNo(o.number)} ?`)) {
       deleteOrder(o.id)
       setOpen(null)
       toast('Commande supprimée.')

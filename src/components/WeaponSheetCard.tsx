@@ -44,7 +44,7 @@ export function WeaponSheetCard({ sheet, compact }: { sheet: WeaponSheet; compac
           <h3 className="font-western text-lg">{sheet.name}</h3>
           {linked.map((p) => (
             <span key={p.id} className="font-type text-sm text-sepia">
-              {money(p.price)} · {p.stock === null ? '∞' : p.stock === 0 ? 'épuisé' : `${p.stock} en stock`}
+              {money(p.price)}
             </span>
           ))}
         </header>

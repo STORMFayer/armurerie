@@ -45,13 +45,12 @@ export default function Caisse() {
   const suggestions = [...new Set(cartSheets.flatMap((x) => x.suggest ?? []))]
     .filter((id) => !cart.items.some((i) => i.productId === id))
     .map((id) => products.find((p) => p.id === id))
-    .filter((p): p is (typeof products)[number] => !!p && (p.stock === null || p.stock > 0))
+    .filter((p): p is (typeof products)[number] => !!p)
 
   const inCart = (id: string) => cart.items.find((i) => i.productId === id)?.qty ?? 0
 
   function add(id: string, qty = 1) {
     const p = products.find((x) => x.id === id)!
-    if (p.stock !== null && inCart(id) + qty > p.stock) return toast.error(`Plus assez de « ${p.name} » en réserve.`)
     addToCart(p, qty)
   }
 

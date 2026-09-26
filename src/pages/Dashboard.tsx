@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
-import { AlertTriangle, Coins, Hourglass, ScrollText, Trophy, Users } from 'lucide-react'
+import { Coins, Hourglass, ScrollText, Trophy, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Empty, Panel, Stat, StatusStamp } from '@/components/ui'
 import { useStore } from '@/lib/store'
 import { fmtDate, isToday, money, orderNo } from '@/lib/utils'
 
 export default function Dashboard() {
-  const { orders, clients, products } = useStore()
+  const { orders, clients } = useStore()
 
   const d = useMemo(() => {
     const valid = orders.filter((o) => o.status === 'payee' || o.status === 'livree')
@@ -25,9 +25,8 @@ export default function Dashboard() {
       pendingTotal: pending.reduce((s, o) => s + o.total, 0),
       pendingCount: pending.length,
       top: [...sold.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5),
-      low: products.filter((p) => p.stock !== null && p.stock <= 2).sort((a, b) => a.stock! - b.stock!),
     }
-  }, [orders, products])
+  }, [orders])
 
   const maxRev = d.top[0]?.revenue ?? 1
 
@@ -46,7 +45,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div>
         <Panel title="Meilleures ventes" icon={<Trophy />}>
           {d.top.length === 0 ? (
             <Empty icon={<Trophy size={30} />}>Pas encore de vente.</Empty>
@@ -70,22 +69,6 @@ export default function Dashboard() {
           )}
         </Panel>
 
-        <Panel title="Réserve basse" icon={<AlertTriangle />}>
-          {d.low.length === 0 ? (
-            <Empty icon={<AlertTriangle size={30} />}>Les râteliers sont pleins.</Empty>
-          ) : (
-            <ul className="divide-y divide-dashed divide-sepia/30">
-              {d.low.map((p) => (
-                <li key={p.id} className="flex justify-between py-2 text-ink">
-                  <span>
-                    {p.name} <span className="text-sm italic text-sepia">— {p.category}</span>
-                  </span>
-                  <span className={p.stock === 0 ? 'stamp text-blood' : 'font-type text-[#9a6a12]'}>{p.stock === 0 ? 'Épuisé' : `${p.stock} restant(s)`}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
       </div>
 
       <Panel title="Dernières transactions" icon={<ScrollText />}>

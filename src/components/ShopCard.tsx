@@ -2,19 +2,16 @@ import { motion } from 'framer-motion'
 import { Info, ShoppingBasket } from 'lucide-react'
 import { useState } from 'react'
 import type { Product } from '@/lib/types'
-import { cn } from '@/lib/utils'
 import { ItemArt } from './ItemArt'
 
 /** Carte d'article façon boutique en jeu (cuir sombre, cadre ornementé, prix vert). */
 export function ShopCard({ product: p, inCart, onAdd, onInfo }: { product: Product; inCart: number; onAdd: (qty: number) => void; onInfo?: () => void }) {
   const [qty, setQty] = useState(1)
-  const left = p.stock === null ? Infinity : p.stock - inCart
-  const out = left <= 0
-  const max = Math.max(1, Math.min(99, left))
+  const max = 999
   const q = Math.min(qty, max)
 
   return (
-    <motion.div layout whileHover={{ y: -3 }} className={cn('shop-card group', out && 'is-out')}>
+    <motion.div layout whileHover={{ y: -3 }} className="shop-card group">
       <span className="shop-corner tl" />
       <span className="shop-corner tr" />
       <span className="shop-corner bl" />
@@ -41,14 +38,11 @@ export function ShopCard({ product: p, inCart, onAdd, onInfo }: { product: Produ
         {p.name}
       </div>
       <p className="relative z-10 border-b border-[#6b4526]/70 py-0.5 text-center text-sm font-bold text-white">
-        En stock: <span className="text-[#7ee05a]">{p.stock === null ? '∞' : Math.max(0, left)}</span>
+        <span className="text-[#e8d2a8]">{p.category}</span>
       </p>
 
       <div className="relative z-10 flex h-[62px] flex-col items-center justify-center gap-1.5 px-2 pb-2">
-        {out ? (
-          <p className="text-[15px] font-bold text-[#e5463a] [text-shadow:0_1px_2px_#000]">Rupture de stock</p>
-        ) : (
-          <>
+        <>
             <div className="flex items-center gap-2">
               <button className="shop-step" onClick={() => setQty(Math.max(1, q - 1))} aria-label="Moins">
                 -
@@ -75,8 +69,7 @@ export function ShopCard({ product: p, inCart, onAdd, onInfo }: { product: Produ
             >
               <ShoppingBasket size={16} strokeWidth={2.4} />
             </motion.button>
-          </>
-        )}
+        </>
       </div>
 
       {inCart > 0 && (
