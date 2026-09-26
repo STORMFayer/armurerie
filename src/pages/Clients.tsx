@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BadgeCheck, BadgeX, Pencil, Search, Trash2, UserPlus, Users } from 'lucide-react'
+import { BadgeCheck, BadgeX, Pencil, Search, ShoppingCart, Trash2, UserPlus, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Empty, Field, Modal, Panel, StatusStamp, useConfirm } from '@/components/ui'
 import { useStore } from '@/lib/store'
+import { useUi } from '@/lib/ui'
 import type { Client } from '@/lib/types'
 import { fmtDate, money, orderNo } from '@/lib/utils'
 
@@ -60,7 +61,17 @@ export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: C
 }
 
 export default function Clients() {
-  const { clients, orders, deleteClient } = useStore()
+  const { clients, orders, deleteClient, setCart, cart } = useStore()
+  const setTab = useUi((s) => s.setTab)
+
+  /** Ouvre la caisse avec ce client déjà sélectionné : la commande lui sera liée. */
+  function newOrder(c: Client) {
+    const other = cart.items.length > 0 && cart.clientId !== c.id
+    setCart({ clientId: c.id })
+    setViewing(null)
+    setTab('caisse')
+    toast(`Nouvelle commande pour ${c.name}`, { description: other ? 'Les articles déjà sur la note sont conservés.' : undefined })
+  }
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState<Client | 'new' | null>(null)
   const [viewing, setViewing] = useState<Client | null>(null)
@@ -134,6 +145,9 @@ export default function Clients() {
                       <td className="text-right font-type">{s?.count ?? 0}</td>
                       <td className="text-right font-type">{money(s?.spent ?? 0)}</td>
                       <td className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <Button size="sm" variant="blood" className="mr-1" onClick={() => newOrder(c)} title="Nouvelle commande pour ce client">
+                          <ShoppingCart size={14} /> Commande
+                        </Button>
                         <button className="cursor-pointer p-1.5 text-sepia hover:text-ink" onClick={() => setEditing(c)} aria-label="Modifier">
                           <Pencil size={16} />
                         </button>
@@ -163,6 +177,9 @@ export default function Clients() {
               <p>Inscrit le {fmtDate(viewing.createdAt).split(' ')[0]}</p>
             </div>
             {viewing.notes && <p className="italic">« {viewing.notes} »</p>}
+            <Button variant="blood" onClick={() => newOrder(viewing)}>
+              <ShoppingCart size={16} /> Nouvelle commande pour {viewing.name}
+            </Button>
             <p className="ornament font-sc">Historique des achats</p>
             {history.length === 0 ? (
               <Empty icon={<Users size={28} />}>Aucun achat pour le moment.</Empty>

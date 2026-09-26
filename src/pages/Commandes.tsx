@@ -1,9 +1,10 @@
-import { ScrollText, Search, Trash2 } from 'lucide-react'
+import { Plus, ScrollText, Search, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Receipt } from '@/components/Receipt'
 import { Button, Empty, Modal, Panel, StatusStamp, useConfirm } from '@/components/ui'
 import { useStore } from '@/lib/store'
+import { useUi } from '@/lib/ui'
 import { STATUS_LABEL, type Order, type OrderStatus } from '@/lib/types'
 import { cn, fmtDate, money, orderNo } from '@/lib/utils'
 
@@ -11,6 +12,7 @@ const FILTERS: (OrderStatus | 'toutes')[] = ['toutes', 'en_attente', 'payee', 'l
 
 export default function Commandes() {
   const { orders, setOrderStatus, deleteOrder } = useStore()
+  const setTab = useUi((s) => s.setTab)
   const [filter, setFilter] = useState<OrderStatus | 'toutes'>('toutes')
   const [q, setQ] = useState('')
   const [open, setOpen] = useState<string | null>(null)
@@ -36,7 +38,14 @@ export default function Commandes() {
     <Panel
       title="Livre des commandes"
       icon={<ScrollText />}
-      actions={pendingTotal > 0 && <span className="font-type text-sm text-[#9a6a12]">À encaisser : {money(pendingTotal)}</span>}
+      actions={
+        <>
+          {pendingTotal > 0 && <span className="font-type text-sm text-[#9a6a12]">À encaisser : {money(pendingTotal)}</span>}
+          <Button variant="blood" onClick={() => setTab('caisse')}>
+            <Plus size={18} /> Nouvelle commande
+          </Button>
+        </>
+      }
     >
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative max-w-sm flex-1">

@@ -1,11 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Coins, Minus, Plus, Printer, Search, ShoppingBag, Trash2, UserPlus, X } from 'lucide-react'
+import { Coins, Lightbulb, Minus, OctagonAlert, Plus, Printer, Search, ShoppingBag, Trash2, UserPlus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { ClientForm } from '@/pages/Clients'
 import { ShopCard } from '@/components/ShopCard'
-import { Button, Empty, Field, Modal, Panel } from '@/components/ui'
+import { Button, Empty, Field, Modal, Panel, useConfirm } from '@/components/ui'
 import { Receipt } from '@/components/Receipt'
+import { WeaponSheetCard } from '@/components/WeaponSheetCard'
+import { sheetFor, type WeaponSheet } from '@/lib/guide'
 import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, type Order } from '@/lib/types'
 import { clamp, cn, computeTotals, money, round2, toNum } from '@/lib/utils'
@@ -17,6 +19,8 @@ export default function Caisse() {
   const [received, setReceived] = useState('')
   const [newClient, setNewClient] = useState(false)
   const [receipt, setReceipt] = useState<Order | null>(null)
+  const [sheet, setSheet] = useState<WeaponSheet | null>(null)
+  const { ask, dialog } = useConfirm()
 
   const filtered = useMemo(
     () => products.filter((p) => (cat === 'Tout' || p.category === cat) && p.name.toLowerCase().includes(q.toLowerCase())),
@@ -26,6 +30,22 @@ export default function Caisse() {
   const receivedNum = toNum(received)
   const change = round2(receivedNum - totals.total)
   const client = clients.find((c) => c.id === cart.clientId)
+
+  // Conseils de l'armurier pour les armes présentes sur la note
+  const cartSheets = [
+    ...new Map(
+      cart.items
+        .map((i) => products.find((p) => p.id === i.productId))
+        .map((p) => (p ? sheetFor(p) : undefined))
+        .filter((x): x is WeaponSheet => !!x)
+        .map((x) => [x.id, x]),
+    ).values(),
+  ]
+  const forbidden = cartSheets.filter((x) => x.tags.includes('jamais'))
+  const suggestions = [...new Set(cartSheets.flatMap((x) => x.suggest ?? []))]
+    .filter((id) => !cart.items.some((i) => i.productId === id))
+    .map((id) => products.find((p) => p.id === id))
+    .filter((p): p is (typeof products)[number] => !!p && (p.stock === null || p.stock > 0))
 
   const inCart = (id: string) => cart.items.find((i) => i.productId === id)?.qty ?? 0
 
@@ -39,6 +59,7 @@ export default function Caisse() {
 
   async function finish(status: 'payee' | 'en_attente') {
     if (status === 'payee' && received && receivedNum < totals.total) return toast.error('Le montant reçu ne couvre pas la note.')
+    if (forbidden.length && !(await ask(`${forbidden.map((f) => f.name).join(', ')} : arme à ne jamais vendre (formation). Vendre quand même ?`))) return
     if (client && !client.licenseValid && cart.items.some((i) => !['Munitions', 'Accessoires', 'Services'].includes(products.find((p) => p.id === i.productId)?.category ?? '')))
       toast.warning(`Attention : ${client.name} n'a pas de permis valide.`)
     setBusy(true)
@@ -82,7 +103,13 @@ export default function Caisse() {
         ) : (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
             {filtered.map((p) => (
-              <ShopCard key={p.id} product={p} inCart={inCart(p.id)} onAdd={(qty) => add(p.id, qty)} />
+              <ShopCard
+                key={p.id}
+                product={p}
+                inCart={inCart(p.id)}
+                onAdd={(qty) => add(p.id, qty)}
+                onInfo={sheetFor(p) ? () => setSheet(sheetFor(p)!) : undefined}
+              />
             ))}
           </div>
         )}
@@ -162,6 +189,38 @@ export default function Caisse() {
           </Field>
         </div>
 
+        {/* Conseils de l'armurier */}
+        {(cartSheets.some((x) => x.advice) || suggestions.length > 0 || forbidden.length > 0) && (
+          <div className="mt-4 space-y-2 rounded-[2px] border border-brass/50 bg-brass/10 p-3 text-ink">
+            <p className="flex items-center gap-2 font-sc text-[#6e4c0f]">
+              <Lightbulb size={16} /> Conseil de l'armurier
+            </p>
+            {forbidden.map((f) => (
+              <p key={f.id} className="flex items-center gap-2 font-sc text-blood">
+                <OctagonAlert size={16} /> {f.name} : à ne jamais vendre
+              </p>
+            ))}
+            {cartSheets
+              .filter((x) => x.advice && !x.tags.includes('jamais'))
+              .map((x) => (
+                <button key={x.id} onClick={() => setSheet(x)} className="block cursor-pointer text-left text-[15px] leading-snug hover:underline">
+                  <span className="font-sc">{x.name} : </span>
+                  {x.advice}
+                </button>
+              ))}
+            {suggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-sm text-sepia">Proposer :</span>
+                {suggestions.map((p) => (
+                  <Button key={p.id} size="sm" variant="ghost" onClick={() => add(p.id)}>
+                    <Plus size={13} /> {p.name} · {money(p.price)}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Totaux */}
         <div className="mt-4 space-y-1 rounded-[2px] bg-ink/5 p-3 font-type text-ink">
           <Row label="Sous-total" value={money(totals.subtotal)} />
@@ -220,6 +279,11 @@ export default function Caisse() {
           }}
         />
       </Modal>
+
+      <Modal open={!!sheet} onOpenChange={(o) => !o && setSheet(null)} title={sheet?.name ?? ''}>
+        {sheet && <WeaponSheetCard sheet={sheet} compact />}
+      </Modal>
+      {dialog}
 
       <Modal open={!!receipt} onOpenChange={(o) => !o && setReceipt(null)} title="Reçu">
         {receipt && (

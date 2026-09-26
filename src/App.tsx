@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users } from 'lucide-react'
+import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
@@ -12,17 +12,20 @@ import Catalogue from '@/pages/Catalogue'
 import Clients from '@/pages/Clients'
 import Commandes from '@/pages/Commandes'
 import Dashboard from '@/pages/Dashboard'
+import Guide from '@/pages/Guide'
+import { useUi, type TabId } from '@/lib/ui'
 
-const TABS: { id: string; label: string; icon: ReactNode; page: () => ReactNode }[] = [
+const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }[] = [
   { id: 'caisse', label: 'Caisse', icon: <Coins size={18} />, page: () => <Caisse /> },
   { id: 'commandes', label: 'Commandes', icon: <ScrollText size={18} />, page: () => <Commandes /> },
   { id: 'clients', label: 'Clients', icon: <Users size={18} />, page: () => <Clients /> },
   { id: 'catalogue', label: 'Catalogue', icon: <Crosshair size={18} />, page: () => <Catalogue /> },
+  { id: 'guide', label: 'Guide', icon: <BookOpen size={18} />, page: () => <Guide /> },
   { id: 'bilan', label: 'Bilan', icon: <LayoutDashboard size={18} />, page: () => <Dashboard /> },
 ]
 
 export default function App() {
-  const [tab, setTab] = useState('caisse')
+  const { tab, setTab } = useUi()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settings = useStore((s) => s.settings)
   const pending = useStore((s) => s.orders.filter((o) => o.status === 'en_attente').length)
@@ -38,7 +41,7 @@ export default function App() {
   }, [])
 
   return (
-    <Tabs.Root value={tab} onValueChange={setTab} className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-10 sm:px-6">
+    <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabId)} className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-10 sm:px-6">
       {/* ——— En-tête ——— */}
       <header className="pt-8 pb-4 text-center">
         <motion.p initial={{ opacity: 0, letterSpacing: '0.6em' }} animate={{ opacity: 1, letterSpacing: '0.35em' }} transition={{ duration: 1 }} className="font-sc text-sm text-brass uppercase">

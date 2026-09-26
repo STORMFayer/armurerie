@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion'
-import { ShoppingBasket } from 'lucide-react'
+import { Info, ShoppingBasket } from 'lucide-react'
 import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { ItemArt } from './ItemArt'
 
 /** Carte d'article façon boutique en jeu (cuir sombre, cadre ornementé, prix vert). */
-export function ShopCard({ product: p, inCart, onAdd }: { product: Product; inCart: number; onAdd: (qty: number) => void }) {
+export function ShopCard({ product: p, inCart, onAdd, onInfo }: { product: Product; inCart: number; onAdd: (qty: number) => void; onInfo?: () => void }) {
   const [qty, setQty] = useState(1)
   const left = p.stock === null ? Infinity : p.stock - inCart
   const out = left <= 0
@@ -19,6 +19,17 @@ export function ShopCard({ product: p, inCart, onAdd }: { product: Product; inCa
       <span className="shop-corner tr" />
       <span className="shop-corner bl" />
       <span className="shop-corner br" />
+
+      {onInfo && (
+        <button
+          onClick={onInfo}
+          className="absolute top-2 left-2 z-20 grid size-6 cursor-pointer place-items-center rounded-full border border-[#b98a4f] bg-[#2a130a]/80 text-[#f0b640] transition hover:scale-110 hover:text-[#ffd97a]"
+          aria-label={`Fiche de l'armurier : ${p.name}`}
+          title="Fiche de l'armurier"
+        >
+          <Info size={14} strokeWidth={2.6} />
+        </button>
+      )}
 
       <p className="relative z-10 pt-2 text-center text-sm font-bold text-[#7ee05a] [text-shadow:0_1px_2px_#000]">{p.price.toFixed(2)}$</p>
 
