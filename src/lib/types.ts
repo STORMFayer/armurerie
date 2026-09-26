@@ -25,7 +25,7 @@ export interface Client {
   id: string
   name: string
   phone: string
-  license: string // n° de permis de port d'arme
+  license: string // plus utilisé (n° de permis retiré de l'interface)
   licenseValid: boolean
   notes: string
   createdAt: number

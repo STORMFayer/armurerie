@@ -33,14 +33,9 @@ export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: C
       <Field label="Nom & prénom *">
         <input className="field" autoFocus value={f.name} onChange={(e) => set({ name: e.target.value })} placeholder="Arthur Morgan" maxLength={80} />
       </Field>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Téléphone / télégramme">
-          <input className="field" value={f.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="555-0199" maxLength={30} />
-        </Field>
-        <Field label="N° permis de port d'arme">
-          <input className="field" value={f.license} onChange={(e) => set({ license: e.target.value })} placeholder="PPA-1899-042" maxLength={40} />
-        </Field>
-      </div>
+      <Field label="Téléphone / télégramme">
+        <input className="field" value={f.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="555-0199" maxLength={30} />
+      </Field>
       <label className="flex cursor-pointer items-center gap-2 text-ink">
         <input type="checkbox" className="size-4 accent-[#a8171c]" checked={f.licenseValid} onChange={(e) => set({ licenseValid: e.target.checked })} />
         Permis valide
@@ -87,7 +82,7 @@ export default function Clients() {
     return m
   }, [orders])
 
-  const list = clients.filter((c) => [c.name, c.phone, c.license].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   async function remove(c: Client) {
     if (await ask(`Rayer ${c.name} du registre ? Ses commandes resteront dans l'historique.`)) {
@@ -110,7 +105,7 @@ export default function Clients() {
     >
       <div className="relative mb-4 max-w-md">
         <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={16} />
-        <input className="field pl-9" placeholder="Nom, téléphone, n° de permis…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="field pl-9" placeholder="Nom, téléphone…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       {list.length === 0 ? (
@@ -139,7 +134,7 @@ export default function Clients() {
                       <td>
                         <span className={`inline-flex items-center gap-1 font-type text-sm ${c.licenseValid ? 'text-sage' : 'text-blood'}`}>
                           {c.licenseValid ? <BadgeCheck size={16} /> : <BadgeX size={16} />}
-                          {c.license || (c.licenseValid ? 'Valide' : 'Aucun')}
+                          {c.licenseValid ? 'Valide' : 'Aucun'}
                         </span>
                       </td>
                       <td className="text-right font-type">{s?.count ?? 0}</td>
@@ -173,7 +168,7 @@ export default function Clients() {
           <div className="space-y-4 text-ink">
             <div className="grid gap-2 font-type text-sm sm:grid-cols-3">
               <p>Tél : {viewing.phone || '—'}</p>
-              <p>Permis : {viewing.license || '—'} {viewing.licenseValid ? '✔' : '✘'}</p>
+              <p>Permis : {viewing.licenseValid ? 'valide ✔' : 'aucun ✘'}</p>
               <p>Inscrit le {fmtDate(viewing.createdAt).split(' ')[0]}</p>
             </div>
             {viewing.notes && <p className="italic">« {viewing.notes} »</p>}
