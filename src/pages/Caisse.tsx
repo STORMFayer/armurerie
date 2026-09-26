@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { ClientForm } from '@/pages/Clients'
 import { ShopCard } from '@/components/ShopCard'
+import { CustomWorkshop } from '@/components/CustomWorkshop'
 import { Button, Empty, Field, Modal, Panel, useConfirm } from '@/components/ui'
 import { Receipt } from '@/components/Receipt'
 import { WeaponSheetCard } from '@/components/WeaponSheetCard'
@@ -23,7 +24,10 @@ export default function Caisse() {
   const { ask, dialog } = useConfirm()
 
   const filtered = useMemo(
-    () => products.filter((p) => (cat === 'Tout' || p.category === cat) && p.name.toLowerCase().includes(q.toLowerCase())),
+    () =>
+      products.filter(
+        (p) => p.category !== 'Personnalisation' && (cat === 'Tout' || p.category === cat) && p.name.toLowerCase().includes(q.toLowerCase()),
+      ),
     [products, cat, q],
   )
   const totals = computeTotals(cart.items, cart.discountPct, settings.taxPct)
@@ -74,6 +78,7 @@ export default function Caisse() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
+      <div className="space-y-6">
       {/* ——— Étalage ——— */}
       <Panel title="L'étalage" icon={<ShoppingBag />}>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row">
@@ -83,7 +88,7 @@ export default function Caisse() {
           </div>
         </div>
         <div className="mb-4 flex flex-wrap gap-1.5">
-          {(['Tout', ...CATEGORIES.filter((c) => products.some((p) => p.category === c))] as const).map((c) => (
+          {(['Tout', ...CATEGORIES.filter((c) => c !== 'Personnalisation' && products.some((p) => p.category === c))] as const).map((c) => (
             <button
               key={c}
               onClick={() => setCat(c)}
@@ -113,6 +118,10 @@ export default function Caisse() {
           </div>
         )}
       </Panel>
+
+      {/* ——— Personnalisation, à part des armes ——— */}
+      <CustomWorkshop options={products.filter((p) => p.category === 'Personnalisation')} inCart={inCart} onAdd={(id) => add(id)} />
+      </div>
 
       {/* ——— Comptoir / note ——— */}
       <Panel title="Le comptoir" icon={<Coins />} className="self-start lg:sticky lg:top-4">
