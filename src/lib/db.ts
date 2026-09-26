@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'sonner'
-import type { Client, Order, OrderItem, OrderStatus, Product, Settings } from './types'
+import { CATEGORIES, type Client, type Order, type OrderItem, type OrderStatus, type Product, type Settings } from './types'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -8,6 +8,14 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 /** null = mode local (pas de Supabase configuré) : tout reste dans le navigateur. */
 export const supabase = url && key ? createClient(url, key) : null
 export const hasDb = !!supabase
+
+/** Tables préfixées : l'armurerie partage le projet Supabase de l'EMS. */
+const T = {
+  products: 'armurerie_products',
+  clients: 'armurerie_clients',
+  orders: 'armurerie_orders',
+  settings: 'armurerie_settings',
+} as const
 
 // ——— Conversion lignes SQL (snake_case) <-> objets de l'app ———
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -98,14 +106,16 @@ export interface Snapshot {
 export async function fetchAll(): Promise<Snapshot | null> {
   if (!supabase) return null
   const [p, c, o, s] = await Promise.all([
-    supabase.from('products').select('*').order('created_at'),
-    supabase.from('clients').select('*').order('created_at', { ascending: false }),
-    supabase.from('orders').select('*').order('number', { ascending: false }),
-    supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
+    supabase.from(T.products).select('*').order('created_at'),
+    supabase.from(T.clients).select('*').order('created_at', { ascending: false }),
+    supabase.from(T.orders).select('*').order('number', { ascending: false }),
+    supabase.from(T.settings).select('*').eq('id', 1).maybeSingle(),
   ])
   if (fail(p.error) || fail(c.error) || fail(o.error) || fail(s.error)) return null
   return {
-    products: (p.data ?? []).map(toProduct),
+    products: (p.data ?? [])
+      .map(toProduct)
+      .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category) || a.name.localeCompare(b.name, 'fr')),
     clients: (c.data ?? []).map(toClient),
     orders: (o.data ?? []).map(toOrder),
     settings: s.data ? toSettings(s.data) : null,
@@ -121,7 +131,7 @@ export function subscribe(onChange: () => void) {
     t = setTimeout(onChange, 250)
   }
   const ch = supabase.channel('armurerie')
-  for (const table of ['products', 'clients', 'orders', 'settings']) ch.on('postgres_changes', { event: '*', schema: 'public', table }, debounced)
+  for (const table of Object.values(T)) ch.on('postgres_changes', { event: '*', schema: 'public', table }, debounced)
   ch.subscribe()
   return () => {
     clearTimeout(t)
@@ -132,48 +142,48 @@ export function subscribe(onChange: () => void) {
 // Toutes les écritures : no-op en mode local.
 export const db = {
   async upsertProduct(p: Product) {
-    if (supabase) fail((await supabase.from('products').upsert(fromProduct(p))).error)
+    if (supabase) fail((await supabase.from(T.products).upsert(fromProduct(p))).error)
   },
   async deleteProduct(id: string) {
-    if (supabase) fail((await supabase.from('products').delete().eq('id', id)).error)
+    if (supabase) fail((await supabase.from(T.products).delete().eq('id', id)).error)
   },
   async upsertClient(c: Client) {
-    if (supabase) fail((await supabase.from('clients').upsert(fromClient(c))).error)
+    if (supabase) fail((await supabase.from(T.clients).upsert(fromClient(c))).error)
   },
   async renameClientOrders(clientId: string, name: string) {
-    if (supabase) fail((await supabase.from('orders').update({ client_name: name }).eq('client_id', clientId)).error)
+    if (supabase) fail((await supabase.from(T.orders).update({ client_name: name }).eq('client_id', clientId)).error)
   },
   async deleteClient(id: string) {
-    if (supabase) fail((await supabase.from('clients').delete().eq('id', id)).error)
+    if (supabase) fail((await supabase.from(T.clients).delete().eq('id', id)).error)
   },
   /** Insère la commande ; la base attribue le numéro. */
   async insertOrder(o: Omit<Order, 'number'>): Promise<Order | null> {
     if (!supabase) return null
-    const { data, error } = await supabase.from('orders').insert(fromOrder(o)).select().single()
+    const { data, error } = await supabase.from(T.orders).insert(fromOrder(o)).select().single()
     return fail(error) ? null : toOrder(data)
   },
   async updateOrder(id: string, patch: { status: OrderStatus; received: number }) {
-    if (supabase) fail((await supabase.from('orders').update(patch).eq('id', id)).error)
+    if (supabase) fail((await supabase.from(T.orders).update(patch).eq('id', id)).error)
   },
   async deleteOrder(id: string) {
-    if (supabase) fail((await supabase.from('orders').delete().eq('id', id)).error)
+    if (supabase) fail((await supabase.from(T.orders).delete().eq('id', id)).error)
   },
   async moveStock(items: OrderItem[], sign: 1 | -1) {
     if (!supabase) return
-    for (const i of items) fail((await supabase.rpc('adjust_stock', { p_id: i.productId, p_delta: sign * i.qty })).error)
+    for (const i of items) fail((await supabase.rpc('armurerie_adjust_stock', { p_id: i.productId, p_delta: sign * i.qty })).error)
   },
   async saveSettings(s: Settings) {
-    if (supabase) fail((await supabase.from('settings').upsert({ id: 1, shop_name: s.shopName, town: s.town, tax_pct: s.taxPct })).error)
+    if (supabase) fail((await supabase.from(T.settings).upsert({ id: 1, shop_name: s.shopName, town: s.town, tax_pct: s.taxPct })).error)
   },
   /** Remplace tout le contenu de la base (import d'une sauvegarde / remise à zéro). */
   async replaceAll(d: { products: Product[]; clients: Client[]; orders: Order[]; settings: Settings }) {
     if (!supabase) return
     for (const t of ['orders', 'clients', 'products'] as const)
-      if (fail((await supabase.from(t).delete().neq('id', '')).error)) return
-    if (d.products.length && fail((await supabase.from('products').insert(d.products.map(fromProduct))).error)) return
-    if (d.clients.length && fail((await supabase.from('clients').insert(d.clients.map(fromClient))).error)) return
-    if (d.orders.length && fail((await supabase.from('orders').insert(d.orders.map(fromOrder))).error)) return
+      if (fail((await supabase.from(T[t]).delete().neq('id', '')).error)) return
+    if (d.products.length && fail((await supabase.from(T.products).insert(d.products.map(fromProduct))).error)) return
+    if (d.clients.length && fail((await supabase.from(T.clients).insert(d.clients.map(fromClient))).error)) return
+    if (d.orders.length && fail((await supabase.from(T.orders).insert(d.orders.map(fromOrder))).error)) return
     await db.saveSettings(d.settings)
-    fail((await supabase.rpc('reset_order_number')).error)
+    fail((await supabase.rpc('armurerie_reset_order_number')).error)
   },
 }
