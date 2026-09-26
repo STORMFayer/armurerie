@@ -7,7 +7,7 @@ export const CATEGORIES = [
   'Armes de jet & blanches',
   'Munitions',
   'Accessoires',
-  'Services',
+  'Personnalisation',
 ] as const
 
 export type Category = (typeof CATEGORIES)[number]

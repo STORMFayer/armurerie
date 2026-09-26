@@ -1,3 +1,4 @@
+import { Box, Crosshair, Gem, Hand, Hammer, Package, Paintbrush, PenTool, Ruler, ScanSearch, Wrench, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { Product } from '@/lib/types'
 
@@ -223,7 +224,31 @@ const ART: Record<Kind, { vb: string; body: ReactNode }> = {
   },
 }
 
+/** Icône d'une option de personnalisation (pas d'image dans le jeu). */
+function customIcon(name: string): LucideIcon {
+  const n = name.toLowerCase()
+  if (n.includes('lunette')) return ScanSearch
+  if (n.includes('gravure')) return PenTool
+  if (n.includes('teinte')) return Paintbrush
+  if (n.includes('matériau')) return Gem
+  if (n.includes('viseur')) return Crosshair
+  if (n.includes('emballage')) return Package
+  if (n.includes('poignée')) return Hand
+  if (n.includes('canon') || n.includes('rayure')) return Ruler
+  if (n.includes('chargeur')) return Box
+  if (n.includes('cadre')) return Hammer
+  return Wrench
+}
+
 export function ItemArt({ product, className }: { product: Product; className?: string }) {
+  if (!product.image && product.category === 'Personnalisation') {
+    const Icon = customIcon(product.name)
+    return (
+      <span className={className} style={{ display: 'grid', placeItems: 'center' }}>
+        <Icon size={46} strokeWidth={1.5} color="#e0b35c" />
+      </span>
+    )
+  }
   if (product.image)
     return <img src={product.image} alt="" className={className} style={{ objectFit: 'contain' }} draggable={false} />
   const art = ART[kindOf(product)]

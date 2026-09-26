@@ -59,7 +59,7 @@ export default function Caisse() {
   async function finish(status: 'payee' | 'en_attente') {
     if (status === 'payee' && received && receivedNum < totals.total) return toast.error('Le montant reçu ne couvre pas la note.')
     if (forbidden.length && !(await ask(`${forbidden.map((f) => f.name).join(', ')} : arme à ne jamais vendre (formation). Vendre quand même ?`))) return
-    if (client && !client.licenseValid && cart.items.some((i) => !['Munitions', 'Accessoires', 'Services'].includes(products.find((p) => p.id === i.productId)?.category ?? '')))
+    if (client && !client.licenseValid && cart.items.some((i) => !['Munitions', 'Accessoires', 'Personnalisation'].includes(products.find((p) => p.id === i.productId)?.category ?? '')))
       toast.warning(`Attention : ${client.name} n'a pas de permis valide.`)
     setBusy(true)
     const order = await checkout(status, received ? receivedNum : totals.total)
