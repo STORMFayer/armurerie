@@ -1,0 +1,310 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #1a130d;
+  --color-wood: #231810;
+  --color-wood-2: #33241a;
+  --color-wood-3: #4a3524;
+  --color-parch: #eadfc4;
+  --color-parch-2: #dccba4;
+  --color-parch-3: #c9b387;
+  --color-sepia: #6b5238;
+  --color-sepia-2: #8a6d4c;
+  --color-blood: #a8171c;
+  --color-blood-2: #7d0f13;
+  --color-brass: #c19a4b;
+  --color-sage: #4f5d3a;
+
+  --font-western: "Rye", "Georgia", serif;
+  --font-serif: "IM Fell English", "Georgia", serif;
+  --font-sc: "IM Fell English SC", "Georgia", serif;
+  --font-type: "Special Elite", "Courier New", monospace;
+}
+
+:root {
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.17 0 0 0 0 0.08 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-parch);
+  font-family: var(--font-serif);
+  background-color: var(--color-wood);
+  /* planches de bois sombre */
+  background-image:
+    radial-gradient(ellipse at 50% -10%, rgba(193, 154, 75, 0.12), transparent 60%),
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.75), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 180px),
+    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.018) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #2a1c12, #1a120c);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-blood);
+  color: var(--color-parch);
+}
+
+@layer components {
+/* ——— Parchemin ——— */
+.parchment {
+  position: relative;
+  color: var(--color-ink);
+  background-color: var(--color-parch);
+  background-image:
+    var(--grain),
+    radial-gradient(ellipse at 15% 10%, rgba(120, 80, 30, 0.18), transparent 45%),
+    radial-gradient(ellipse at 90% 85%, rgba(120, 80, 30, 0.22), transparent 50%),
+    radial-gradient(ellipse at center, transparent 55%, rgba(90, 55, 20, 0.35) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35) inset,
+    0 0 0 1px rgba(60, 35, 15, 0.45),
+    0 18px 40px -12px rgba(0, 0, 0, 0.8);
+  border-radius: 3px;
+}
+
+.parchment-inner-border::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(60, 35, 15, 0.35);
+  outline: 1px solid rgba(60, 35, 15, 0.18);
+  outline-offset: 3px;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* ——— Titres ——— */
+.title-western {
+  font-family: var(--font-western);
+  letter-spacing: 0.04em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
+}
+
+.ornament {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-sepia);
+}
+.ornament::before,
+.ornament::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+}
+
+/* trait de pinceau rouge façon menu RDR2 */
+.brush {
+  background:
+    radial-gradient(ellipse at 10% 50%, var(--color-blood) 30%, transparent 70%),
+    linear-gradient(90deg, transparent, var(--color-blood) 8%, var(--color-blood) 92%, transparent);
+  clip-path: polygon(0 35%, 3% 10%, 20% 18%, 45% 0, 70% 14%, 97% 4%, 100% 50%, 96% 92%, 72% 82%, 50% 100%, 25% 86%, 4% 96%);
+}
+
+/* ——— Champs ——— */
+.field {
+  width: 100%;
+  background: rgba(255, 250, 235, 0.55);
+  border: 1px solid rgba(80, 50, 25, 0.45);
+  border-radius: 2px;
+  padding: 0.5rem 0.7rem;
+  font-family: var(--font-type);
+  font-size: 0.95rem;
+  color: var(--color-ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.field::placeholder {
+  color: rgba(80, 55, 30, 0.55);
+}
+.field:focus {
+  border-color: var(--color-blood);
+  background: rgba(255, 250, 235, 0.85);
+  box-shadow: 0 0 0 3px rgba(168, 23, 28, 0.18);
+}
+select.field {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-sepia) 50%),
+    linear-gradient(135deg, var(--color-sepia) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+/* ——— Tableaux ——— */
+.ledger th {
+  font-family: var(--font-sc);
+  font-weight: normal;
+  text-align: left;
+  color: var(--color-sepia);
+  border-bottom: 2px solid rgba(60, 35, 15, 0.55);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.95rem;
+}
+.ledger td {
+  border-bottom: 1px dashed rgba(60, 35, 15, 0.3);
+  padding: 0.55rem 0.6rem;
+  vertical-align: middle;
+}
+.ledger tbody tr {
+  transition: background 0.15s;
+}
+.ledger tbody tr:hover {
+  background: rgba(120, 80, 30, 0.08);
+}
+
+/* tampon */
+.stamp {
+  font-family: var(--font-western);
+  text-transform: uppercase;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  transform: rotate(-3deg);
+  display: inline-block;
+  opacity: 0.85;
+}
+
+/* ——— Cartes boutique façon jeu ——— */
+.shop-card {
+  position: relative;
+  border-radius: 7px;
+  color: #fff;
+  background:
+    var(--grain),
+    radial-gradient(ellipse at 50% 30%, #6a3a1e 0%, #4a2612 45%, #2a130a 100%);
+  border: 2px solid #150a04;
+  box-shadow:
+    inset 0 0 0 2px #3a2010,
+    inset 0 0 0 3px #7a5230,
+    inset 0 0 18px rgba(0, 0, 0, 0.75),
+    0 6px 14px -4px rgba(0, 0, 0, 0.7);
+  font-family: "Times New Roman", Times, serif;
+  font-variant-numeric: lining-nums;
+  transition: box-shadow 0.2s;
+}
+.shop-card:hover {
+  box-shadow:
+    inset 0 0 0 2px #3a2010,
+    inset 0 0 0 3px #c89a55,
+    inset 0 0 18px rgba(0, 0, 0, 0.75),
+    0 10px 22px -6px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(240, 182, 64, 0.5);
+}
+.shop-card.is-out img,
+.shop-card.is-out svg {
+  filter: saturate(0.75) brightness(0.9);
+}
+/* coins ornementés */
+.shop-corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  z-index: 5;
+  border-color: #b98a4f;
+  pointer-events: none;
+}
+.shop-corner::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #d9ad6a;
+  transform: rotate(45deg);
+}
+.shop-corner.tl { top: 5px; left: 5px; border-top: 2px solid; border-left: 2px solid; border-top-left-radius: 5px; }
+.shop-corner.tr { top: 5px; right: 5px; border-top: 2px solid; border-right: 2px solid; border-top-right-radius: 5px; }
+.shop-corner.bl { bottom: 5px; left: 5px; border-bottom: 2px solid; border-left: 2px solid; border-bottom-left-radius: 5px; }
+.shop-corner.br { bottom: 5px; right: 5px; border-bottom: 2px solid; border-right: 2px solid; border-bottom-right-radius: 5px; }
+.shop-corner.tl::after { top: 3px; left: 3px; }
+.shop-corner.tr::after { top: 3px; right: 3px; }
+.shop-corner.bl::after { bottom: 3px; left: 3px; }
+.shop-corner.br::after { bottom: 3px; right: 3px; }
+.shop-strip {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.45));
+  border-top: 1px solid rgba(122, 82, 48, 0.8);
+  border-bottom: 1px solid rgba(122, 82, 48, 0.8);
+  text-shadow: 0 1px 2px #000;
+}
+.shop-step {
+  cursor: pointer;
+  color: #f0b640;
+  font-weight: bold;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0 0.3rem;
+  text-shadow: 0 1px 2px #000;
+  transition: color 0.15s, transform 0.1s;
+}
+.shop-step:hover {
+  color: #ffd97a;
+  transform: scale(1.2);
+}
+.shop-basket {
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 22px;
+  border-radius: 5px;
+  color: #3a1d05;
+  background: linear-gradient(180deg, #ffd27a 0%, #f0a43a 45%, #b8661a 100%);
+  border: 1px solid #5a2e08;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 3px rgba(0, 0, 0, 0.6);
+  transition: filter 0.15s;
+}
+.shop-basket:hover {
+  filter: brightness(1.12);
+}
+
+/* scrollbar */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(80, 50, 25, 0.4);
+  border-radius: 4px;
+}
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: fixed;
+    inset: 0;
+    box-shadow: none !important;
+  }
+}
