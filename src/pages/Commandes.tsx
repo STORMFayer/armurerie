@@ -21,7 +21,7 @@ export default function Commandes() {
   const list = orders.filter(
     (o) =>
       (filter === 'toutes' || o.status === filter) &&
-      [orderNo(o.number), o.clientName, ...o.items.map((i) => i.name)].join(' ').toLowerCase().includes(q.toLowerCase()),
+      [orderNo(o.number), o.clientName, ...o.items.map((i) => i.name), ...o.items.flatMap((i) => i.serials ?? [])].join(' ').toLowerCase().includes(q.toLowerCase()),
   )
   const current = orders.find((o) => o.id === open) ?? null
   const pendingTotal = orders.filter((o) => o.status === 'en_attente').reduce((s, o) => s + o.total, 0)
@@ -50,7 +50,7 @@ export default function Commandes() {
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={16} />
-          <input className="field pl-9" placeholder="N°, client, article…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field pl-9" placeholder="N° de commande, client, article, n° de série…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {FILTERS.map((f) => (

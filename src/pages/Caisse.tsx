@@ -11,10 +11,10 @@ import { WeaponSheetCard } from '@/components/WeaponSheetCard'
 import { sheetFor, type WeaponSheet } from '@/lib/guide'
 import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, type Order } from '@/lib/types'
-import { clamp, cn, computeTotals, money, round2, toNum } from '@/lib/utils'
+import { clamp, cn, computeTotals, money, needsSerial, orderNo, round2, SERIAL_RE, toNum } from '@/lib/utils'
 
 export default function Caisse() {
-  const { products, clients, cart, settings, addToCart, setQty, removeFromCart, setCart, clearCart, checkout } = useStore()
+  const { products, clients, orders, cart, settings, addToCart, setQty, setSerial, removeFromCart, setCart, clearCart, checkout } = useStore()
   const [q, setQ] = useState('')
   const [cat, setCat] = useState<Category | 'Tout'>('Tout')
   const [received, setReceived] = useState('')
@@ -60,8 +60,42 @@ export default function Caisse() {
 
   const [busy, setBusy] = useState(false)
 
+  const categoryOf = (id: string) => products.find((p) => p.id === id)?.category
+
+  /** Vérifie les numéros de série des armes. Renvoie false si l'encaissement doit être bloqué. */
+  async function checkSerials() {
+    const seen = new Set<string>()
+    for (const i of cart.items) {
+      if (!needsSerial(categoryOf(i.productId))) continue
+      const list = Array.from({ length: i.qty }, (_, k) => (i.serials?.[k] ?? '').trim())
+      const missing = list.filter((x) => !x).length
+      if (missing) {
+        toast.error(`${i.name} : ${missing} numéro(s) de série manquant(s).`)
+        return false
+      }
+      for (const sn of list) {
+        if (!SERIAL_RE.test(sn)) {
+          toast.error(`${i.name} : « ${sn} » n'est pas un numéro de série valide (ex. 1790719077-6388).`)
+          return false
+        }
+        if (seen.has(sn)) {
+          toast.error(`Le numéro de série ${sn} est saisi deux fois.`)
+          return false
+        }
+        seen.add(sn)
+      }
+    }
+    // déjà vendu dans une commande précédente ?
+    const sold = orders.filter((o) => o.status !== 'annulee').flatMap((o) => o.items.flatMap((it) => (it.serials ?? []).map((sn) => ({ sn, o }))))
+    const again = sold.filter((x) => seen.has(x.sn))
+    if (again.length)
+      return ask(`Numéro(s) déjà vendu(s) : ${again.map((x) => `${x.sn} (${orderNo(x.o.number)}, ${x.o.clientName})`).join(' ; ')}. Encaisser quand même ?`)
+    return true
+  }
+
   async function finish(status: 'payee' | 'en_attente') {
     if (status === 'payee' && received && receivedNum < totals.total) return toast.error('Le montant reçu ne couvre pas la note.')
+    if (!(await checkSerials())) return
     if (forbidden.length && !(await ask(`${forbidden.map((f) => f.name).join(', ')} : arme à ne jamais vendre (formation). Vendre quand même ?`))) return
     if (client && !client.licenseValid && cart.items.some((i) => !['Munitions', 'Accessoires', 'Personnalisation'].includes(products.find((p) => p.id === i.productId)?.category ?? '')))
       toast.warning(`Attention : ${client.name} n'a pas de permis valide.`)
@@ -157,8 +191,9 @@ export default function Caisse() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20, height: 0 }}
-                  className="flex items-center gap-2 border-b border-dashed border-sepia/30 py-1.5"
+                  className="border-b border-dashed border-sepia/30 py-1.5"
                 >
+                  <div className="flex items-center gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate leading-tight text-ink">{i.name}</p>
                     <p className="font-type text-xs text-sepia">{money(i.price)} pièce</p>
@@ -176,6 +211,26 @@ export default function Caisse() {
                   <button className="cursor-pointer p-1 text-sepia hover:text-blood" onClick={() => removeFromCart(i.productId)} aria-label="Retirer">
                     <X size={14} />
                   </button>
+                  </div>
+                  {needsSerial(categoryOf(i.productId)) && (
+                    <div className="mt-1 space-y-1 pl-2">
+                      {Array.from({ length: i.qty }, (_, k) => {
+                        const v = i.serials?.[k] ?? ''
+                        const bad = v.trim() !== '' && !SERIAL_RE.test(v.trim())
+                        return (
+                          <input
+                            key={k}
+                            className={cn('field py-1 text-sm', !v.trim() && 'border-blood/60', bad && 'border-blood bg-blood/5')}
+                            placeholder={`N° de série${i.qty > 1 ? ` (${k + 1})` : ''} — ex. 1790719077-6388`}
+                            value={v}
+                            onChange={(e) => setSerial(i.productId, k, e.target.value)}
+                            maxLength={24}
+                            aria-label={`Numéro de série ${k + 1} de ${i.name}`}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
                 </motion.li>
               ))}
             </AnimatePresence>

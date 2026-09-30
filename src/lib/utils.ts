@@ -26,6 +26,12 @@ export function computeTotals(items: OrderItem[], discountPct: number, taxPct: n
   return { subtotal, discount, tax, total }
 }
 
+/** Catégories dont chaque exemplaire vendu doit avoir un numéro de série. */
+export const SERIAL_CATEGORIES = ['Revolvers', 'Pistolets', 'Carabines', 'Fusils', 'Fusils à pompe', 'Armes de jet & blanches']
+export const needsSerial = (category?: string) => !!category && SERIAL_CATEGORIES.includes(category)
+/** Format des numéros de série, ex. 1790719077-6388 */
+export const SERIAL_RE = /^\d{6,12}-\d{2,6}$/
+
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
 
 export const isToday = (ts: number) => new Date(ts).toDateString() === new Date().toDateString()
