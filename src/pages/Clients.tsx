@@ -1,12 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BadgeCheck, BadgeX, Pencil, Search, ShoppingCart, Trash2, UserPlus, Users } from 'lucide-react'
+import { BadgeCheck, BadgeX, Crosshair, Pencil, Search, ShoppingCart, Trash2, UserPlus, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Empty, Field, Modal, Panel, StatusStamp, useConfirm } from '@/components/ui'
 import { useStore } from '@/lib/store'
 import { useUi } from '@/lib/ui'
 import type { Client } from '@/lib/types'
-import { fmtDate, money, orderNo } from '@/lib/utils'
+import { ItemArt } from '@/components/ItemArt'
+import { cn, fmtDate, money, needsSerial, orderNo } from '@/lib/utils'
 
 export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: Client) => void }) {
   const saveClient = useStore((s) => s.saveClient)
@@ -56,7 +57,7 @@ export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: C
 }
 
 export default function Clients() {
-  const { clients, orders, deleteClient, setCart, cart } = useStore()
+  const { clients, orders, products, deleteClient, setCart, cart } = useStore()
   const setTab = useUi((s) => s.setTab)
 
   /** Ouvre la caisse avec ce client déjà sélectionné : la commande lui sera liée. */
@@ -82,7 +83,8 @@ export default function Clients() {
     return m
   }, [orders])
 
-  const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
+  const serialsOf = (id: string) => orders.filter((o) => o.clientId === id).flatMap((o) => o.items.flatMap((i) => i.serials ?? []))
+  const list = clients.filter((c) => [c.name, c.phone, ...serialsOf(c.id)].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   async function remove(c: Client) {
     if (await ask(`Rayer ${c.name} du registre ? Ses commandes resteront dans l'historique.`)) {
@@ -92,6 +94,13 @@ export default function Clients() {
   }
 
   const history = viewing ? orders.filter((o) => o.clientId === viewing.id) : []
+
+  // Armes achetées par le client : une ligne par exemplaire, avec son numéro de série
+  const weapons = history.flatMap((o) =>
+    o.items
+      .filter((i) => i.serials?.length || needsSerial(products.find((p) => p.id === i.productId)?.category))
+      .flatMap((i) => Array.from({ length: i.qty }, (_, k) => ({ key: `${o.id}-${i.productId}-${k}`, item: i, serial: i.serials?.[k], order: o }))),
+  )
 
   return (
     <Panel
@@ -105,7 +114,7 @@ export default function Clients() {
     >
       <div className="relative mb-4 max-w-md">
         <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={16} />
-        <input className="field pl-9" placeholder="Nom, téléphone…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="field pl-9" placeholder="Nom, téléphone, n° de série d'une arme…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       {list.length === 0 ? (
@@ -175,6 +184,39 @@ export default function Clients() {
             <Button variant="blood" onClick={() => newOrder(viewing)}>
               <ShoppingCart size={16} /> Nouvelle commande pour {viewing.name}
             </Button>
+            <p className="ornament font-sc">Armes achetées ({weapons.filter((w) => w.order.status !== 'annulee').length})</p>
+            {weapons.length === 0 ? (
+              <Empty icon={<Crosshair size={28} />}>Aucune arme achetée.</Empty>
+            ) : (
+              <ul className="divide-y divide-dashed divide-sepia/30">
+                {weapons.map(({ key, item, serial, order }) => {
+                  const product = products.find((p) => p.id === item.productId)
+                  const cancelled = order.status === 'annulee'
+                  return (
+                    <li key={key} className={cn('flex items-center gap-3 py-2', cancelled && 'opacity-50')}>
+                      <span className="grid size-12 shrink-0 place-items-center rounded-[3px] bg-[#3a2010] p-1">
+                        {product && <ItemArt product={product} className="size-full" />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn('leading-tight', cancelled && 'line-through')}>{item.name}</p>
+                        <p className="font-type text-xs text-sepia">
+                          {orderNo(order.number)} · {fmtDate(order.createdAt)}
+                          {cancelled && ' · annulée'}
+                        </p>
+                      </div>
+                      {serial ? (
+                        <span className="rounded-[2px] border border-sepia/40 bg-[rgba(255,250,235,.6)] px-2 py-0.5 font-type text-sm tracking-wide select-all" title="N° de série">
+                          {serial}
+                        </span>
+                      ) : (
+                        <span className="text-xs italic text-sepia-2">sans n° de série</span>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+
             <p className="ornament font-sc">Historique des achats</p>
             {history.length === 0 ? (
               <Empty icon={<Users size={28} />}>Aucun achat pour le moment.</Empty>
