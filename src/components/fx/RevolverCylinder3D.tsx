@@ -6,7 +6,12 @@ import { prefersReducedMotion } from '@/lib/motion'
 const CHAMBERS = Array.from({ length: 6 }, (_, i) => (i / 6) * Math.PI * 2)
 
 /** Barillet de revolver en laiton, modélisé en react-three-fiber. */
-function Cylinder({ spin }: { spin: boolean }) {
+const FINISH = {
+  brass: { body: '#d8a64c', emissive: '#3a2208', light: '#ffe2a8', rim: '#a8171c' },
+  chrome: { body: '#dfe5ee', emissive: '#10141c', light: '#ffffff', rim: '#7c8cff' },
+}
+
+function Cylinder({ spin, finish }: { spin: boolean; finish: keyof typeof FINISH }) {
   const ref = useRef<Group>(null)
   useFrame((_, dt) => {
     if (!ref.current || !spin) return
@@ -18,7 +23,7 @@ function Cylinder({ spin }: { spin: boolean }) {
       {/* corps */}
       <mesh>
         <cylinderGeometry args={[1, 1, 1.1, 48]} />
-        <meshStandardMaterial color="#d8a64c" metalness={0.55} roughness={0.32} emissive="#3a2208" emissiveIntensity={0.35} />
+        <meshStandardMaterial color={FINISH[finish].body} metalness={0.55} roughness={0.32} emissive={FINISH[finish].emissive} emissiveIntensity={0.35} />
       </mesh>
       {/* chambres (vues de dessus et de dessous) */}
       {CHAMBERS.map((a) => (
@@ -36,15 +41,15 @@ function Cylinder({ spin }: { spin: boolean }) {
   )
 }
 
-export default function RevolverCylinder3D({ size = 96 }: { size?: number }) {
+export default function RevolverCylinder3D({ size = 96, finish = 'brass' }: { size?: number; finish?: keyof typeof FINISH }) {
   return (
     <div style={{ width: size, height: size }} aria-hidden="true">
       <Canvas camera={{ position: [0, 2.2, 2.6], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true, antialias: true }}>
         <ambientLight intensity={1.4} />
         <hemisphereLight args={['#ffe9c4', '#3a1a0b', 1.2]} />
-        <directionalLight position={[3, 4, 2]} intensity={3.2} color="#ffe2a8" />
-        <pointLight position={[-3, -1, 2]} intensity={6} color="#a8171c" />
-        <Cylinder spin={!prefersReducedMotion()} />
+        <directionalLight position={[3, 4, 2]} intensity={3.2} color={FINISH[finish].light} />
+        <pointLight position={[-3, -1, 2]} intensity={6} color={FINISH[finish].rim} />
+        <Cylinder spin={!prefersReducedMotion()} finish={finish} />
       </Canvas>
     </div>
   )

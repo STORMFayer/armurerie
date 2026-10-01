@@ -5,12 +5,12 @@ import { prefersReducedMotion } from '@/lib/motion'
  * Emblème « liquid metal » (Paper Shaders — la librairie derrière paper-design/liquid-logo) :
  * un barillet de revolver en laiton liquide.
  */
-export default function LiquidEmblem({ size = 92 }: { size?: number }) {
+export default function LiquidEmblem({ size = 92, tint = '#f2c46d' }: { size?: number; tint?: string }) {
   return (
     <LiquidMetal
       image={`${import.meta.env.BASE_URL}img/emblem.svg`}
       colorBack="#00000000"
-      colorTint="#f2c46d"
+      colorTint={tint}
       shape="none"
       repetition={4}
       softness={0.2}
