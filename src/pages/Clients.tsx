@@ -138,9 +138,9 @@ const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().inc
                   return (
                     <motion.tr key={c.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cursor-pointer" onClick={() => setViewing(c)}>
                       <td className="text-lg">{c.name}</td>
-                      <td className="font-type text-sm">{c.phone || '—'}</td>
+                      <td className="font-type text-[17px] tracking-[.04em]">{c.phone || '—'}</td>
                       <td>
-                        <span className={`inline-flex items-center gap-1 font-type text-sm ${c.licenseValid ? 'text-sage' : 'text-blood'}`}>
+                        <span className={`inline-flex items-center gap-1 font-type text-[17px] tracking-[.04em] ${c.licenseValid ? 'text-sage' : 'text-blood'}`}>
                           {c.licenseValid ? <BadgeCheck size={16} /> : <BadgeX size={16} />}
                           {c.licenseValid ? 'Valide' : 'Aucun'}
                         </span>
@@ -148,7 +148,7 @@ const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().inc
                       <td className="text-right font-type">{s?.count ?? 0}</td>
                       <td className="text-right font-type">{money(s?.spent ?? 0)}</td>
                       <td className="text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="blood" className="mr-1" onClick={() => newOrder(c)} title="Nouvelle commande pour ce client">
+                        <Button size="sm" variant="ink" className="mr-1" onClick={() => newOrder(c)} title="Nouvelle commande pour ce client">
                           <ShoppingCart size={14} /> Commande
                         </Button>
                         <button className="cursor-pointer p-1.5 text-sepia hover:text-ink" onClick={() => setEditing(c)} aria-label="Modifier">
@@ -174,7 +174,7 @@ const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().inc
       <Modal open={!!viewing} onOpenChange={(o) => !o && setViewing(null)} title={viewing?.name ?? ''} wide>
         {viewing && (
           <div className="space-y-4 text-ink">
-            <div className="grid gap-2 font-type text-sm sm:grid-cols-3">
+            <div className="grid gap-2 font-type text-[17px] tracking-[.04em] sm:grid-cols-3">
               <p>Tél : {viewing.phone || '—'}</p>
               <p>Permis : {viewing.licenseValid ? 'valide ✔' : 'aucun ✘'}</p>
               <p>Inscrit le {fmtDate(viewing.createdAt).split(' ')[0]}</p>
@@ -193,12 +193,12 @@ const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().inc
                   const cancelled = order.status === 'annulee'
                   return (
                     <li key={key} className={cn('flex items-center gap-3 py-2', cancelled && 'opacity-50')}>
-                      <span className="grid size-12 shrink-0 place-items-center rounded-[3px] bg-[#3a2010] p-1">
+                      <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-white/[.05] p-1">
                         {product && <ItemArt product={product} className="size-full" />}
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className={cn('leading-tight', cancelled && 'line-through')}>{item.name}</p>
-                        <p className="font-type text-xs text-sepia">
+                        <p className="font-type text-[15px] tracking-[.04em] text-sepia">
                           {orderNo(order.number)} · {fmtDate(order.createdAt)}
                           {cancelled && ' · annulée'}
                         </p>

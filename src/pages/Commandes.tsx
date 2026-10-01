@@ -40,7 +40,7 @@ export default function Commandes() {
       icon={<ScrollText />}
       actions={
         <>
-          {pendingTotal > 0 && <span className="font-type text-sm text-[#9a6a12]">À encaisser : {money(pendingTotal)}</span>}
+          {pendingTotal > 0 && <span className="label text-[15px] text-brass">À encaisser : {money(pendingTotal)}</span>}
           <Button variant="blood" onClick={() => setTab('caisse')}>
             <Plus size={18} /> Nouvelle commande
           </Button>
@@ -58,8 +58,8 @@ export default function Commandes() {
               key={f}
               onClick={() => setFilter(f)}
               className={cn(
-                'cursor-pointer rounded-[2px] border px-2.5 py-1 font-sc text-sm transition',
-                filter === f ? 'border-blood-2 bg-blood text-parch' : 'border-sepia/35 text-sepia hover:bg-sepia/10',
+                'label cursor-pointer rounded-full border px-3 py-1 text-[15px] transition',
+                filter === f ? 'border-blood bg-blood text-white shadow-[0_0_18px_-4px_rgba(208,27,37,.7)]' : 'border-white/10 text-sepia hover:bg-white/[.06] hover:text-ink',
               )}
             >
               {f === 'toutes' ? 'Toutes' : STATUS_LABEL[f]} ({f === 'toutes' ? orders.length : orders.filter((o) => o.status === f).length})
@@ -87,13 +87,13 @@ export default function Commandes() {
               {list.map((o) => (
                 <tr key={o.id} className="cursor-pointer" onClick={() => setOpen(o.id)}>
                   <td className="font-type">{orderNo(o.number)}</td>
-                  <td className="font-type text-sm whitespace-nowrap">{fmtDate(o.createdAt)}</td>
+                  <td className="font-type text-[17px] tracking-[.04em] whitespace-nowrap">{fmtDate(o.createdAt)}</td>
                   <td className="text-lg">{o.clientName}</td>
                   <td className="max-w-xs truncate text-sm text-sepia">{o.items.map((i) => `${i.qty}× ${i.name}`).join(', ')}</td>
                   <td>
                     <StatusStamp status={o.status} />
                   </td>
-                  <td className="text-right font-type text-lg">{money(o.total)}</td>
+                  <td className="text-right font-type text-2xl">{money(o.total)}</td>
                 </tr>
               ))}
             </tbody>

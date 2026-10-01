@@ -82,7 +82,7 @@ export default function Catalogue() {
           if (!items.length) return null
           return (
             <div key={cat}>
-              <p className="ornament mb-1 font-western text-lg">{cat}</p>
+              <p className="ornament mb-2 text-[19px]">{cat}</p>
               <div className="overflow-x-auto">
                 <table className="ledger w-full min-w-[560px]">
                   <tbody>

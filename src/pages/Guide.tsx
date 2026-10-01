@@ -29,7 +29,7 @@ export default function Guide() {
               if (!list.length) return null
               return (
                 <section key={f}>
-                  <p className="ornament mb-3 font-western text-lg">{f}</p>
+                  <p className="ornament mb-3 text-[19px]">{f}</p>
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     {list.map((s) => (
                       <WeaponSheetCard key={s.id} sheet={s} />
@@ -45,13 +45,13 @@ export default function Guide() {
       <Panel title="Savoir-faire" icon={<BookOpen />}>
         <div className="grid gap-3 md:grid-cols-2">
           {KNOW_HOW.map((k) => (
-            <div key={k.title} className="rounded-[2px] border border-sepia/35 bg-[rgba(255,250,235,.35)] p-4 text-ink">
-              <h3 className="font-western text-lg">{k.title}</h3>
+            <div key={k.title} className="tile p-4 text-ink hover:translate-y-0">
+              <h3 className="font-western text-[24px] tracking-[.05em]">{k.title.toUpperCase()}</h3>
               <p className="mt-1">{k.text}</p>
-              <p className="mt-2 border-l-2 border-sepia/40 pl-2 font-type text-xs text-sepia">« {k.raw} »</p>
+              <p className="mt-2 border-l-2 border-white/15 pl-2 text-[14px] text-sepia italic">« {k.raw} »</p>
             </div>
           ))}
-          <div className="flex items-center gap-4 rounded-[2px] border-2 border-double border-blood/50 bg-blood/5 p-4 text-ink">
+          <div className="flex items-center gap-4 rounded-[16px] border border-blood/40 bg-blood/10 p-4 text-ink shadow-[0_0_30px_-10px_rgba(208,27,37,.5)]">
             <Mail className="text-blood" size={28} />
             <div>
               <p className="font-sc text-sepia">{CONTACT.label}</p>

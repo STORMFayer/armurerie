@@ -1,28 +1,33 @@
 @import "tailwindcss";
 
+/*
+ * Direction artistique « B » : menu en jeu RDR2, version high-tech.
+ * Fonds sombres en verre (flou + liseré lumineux), coins arrondis, blanc cassé, rouge sang, accents laiton.
+ * Les noms de couleurs historiques (ink, parch, sepia…) sont gardés mais remappés pour un fond sombre.
+ */
 @theme {
-  --color-ink: #1a130d;
-  --color-wood: #231810;
-  --color-wood-2: #33241a;
-  --color-wood-3: #4a3524;
-  --color-parch: #eadfc4;
-  --color-parch-2: #dccba4;
-  --color-parch-3: #c9b387;
-  --color-sepia: #6b5238;
-  --color-sepia-2: #8a6d4c;
-  --color-blood: #a8171c;
-  --color-blood-2: #7d0f13;
-  --color-brass: #c19a4b;
-  --color-sage: #4f5d3a;
+  --color-ink: #f1ece2; /* texte principal */
+  --color-parch: #f1ece2; /* texte sur bouton rouge / clair */
+  --color-parch-2: #d9d1c4;
+  --color-parch-3: #b8afa2;
+  --color-sepia: #a39a8e; /* texte secondaire */
+  --color-sepia-2: #776f66; /* texte tertiaire */
+  --color-blood: #d01b25;
+  --color-blood-2: #9c1219;
+  --color-brass: #d6a54d;
+  --color-sage: #6fbf73;
+  --color-wood: #0e0a08;
+  --color-wood-2: #17110d;
+  --color-wood-3: #241a14;
 
-  --font-western: "Rye", "Georgia", serif;
-  --font-serif: "IM Fell English", "Georgia", serif;
-  --font-sc: "IM Fell English SC", "Georgia", serif;
-  --font-type: "Special Elite", "Courier New", monospace;
-}
+  --font-western: "Bebas Neue", "Oswald", sans-serif;
+  --font-serif: "Crimson Pro", Georgia, serif;
+  --font-sc: "Bebas Neue", "Oswald", sans-serif;
+  --font-type: "Bebas Neue", "Oswald", sans-serif;
 
-:root {
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.25 0 0 0 0 0.17 0 0 0 0 0.08 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --radius-panel: 22px;
+  --radius-tile: 16px;
+  --radius-ctl: 12px;
 }
 
 html,
@@ -33,259 +38,243 @@ body,
 
 body {
   margin: 0;
-  color: var(--color-parch);
+  color: var(--color-ink);
   font-family: var(--font-serif);
+  font-size: 17px;
   background-color: var(--color-wood);
-  /* planches de bois sombre */
   background-image:
-    radial-gradient(ellipse at 50% -10%, rgba(193, 154, 75, 0.12), transparent 60%),
-    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.75), transparent 60%),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 2px, transparent 2px 180px),
-    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.018) 0 1px, transparent 1px 7px),
-    linear-gradient(180deg, #2a1c12, #1a120c);
+    radial-gradient(ellipse at 15% -10%, rgba(160, 30, 20, 0.35), transparent 55%),
+    radial-gradient(ellipse at 95% 110%, rgba(181, 120, 42, 0.18), transparent 55%),
+    radial-gradient(ellipse at center, #22150f 0%, #0e0a08 75%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
   background: var(--color-blood);
-  color: var(--color-parch);
+  color: #fff;
 }
 
 @layer components {
-/* ——— Parchemin ——— */
-.parchment {
-  position: relative;
-  color: var(--color-ink);
-  background-color: var(--color-parch);
-  background-image:
-    var(--grain),
-    radial-gradient(ellipse at 15% 10%, rgba(120, 80, 30, 0.18), transparent 45%),
-    radial-gradient(ellipse at 90% 85%, rgba(120, 80, 30, 0.22), transparent 50%),
-    radial-gradient(ellipse at center, transparent 55%, rgba(90, 55, 20, 0.35) 100%);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 0 0 1px rgba(60, 35, 15, 0.45),
-    0 18px 40px -12px rgba(0, 0, 0, 0.8);
-  border-radius: 3px;
-}
+  /* ——— Panneau verre ——— */
+  .glass-panel {
+    position: relative;
+    border-radius: var(--radius-panel);
+    background: linear-gradient(180deg, rgba(30, 21, 17, 0.74), rgba(10, 7, 6, 0.8));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(241, 236, 226, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 30px 60px -28px rgba(0, 0, 0, 0.9);
+  }
+  /* liseré lumineux en haut (touche high-tech) */
+  .glass-panel::before {
+    content: "";
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    top: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(208, 27, 37, 0.9) 30%, rgba(214, 165, 77, 0.8) 70%, transparent);
+    opacity: 0.7;
+    pointer-events: none;
+  }
 
-.parchment-inner-border::after {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border: 1px solid rgba(60, 35, 15, 0.35);
-  outline: 1px solid rgba(60, 35, 15, 0.18);
-  outline-offset: 3px;
-  pointer-events: none;
-  border-radius: 2px;
-}
+  /* ——— Titres / libellés ——— */
+  .title-western {
+    font-family: var(--font-western);
+    letter-spacing: 0.05em;
+    line-height: 0.92;
+    text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+  }
+  .label {
+    font-family: var(--font-sc);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
 
-/* ——— Titres ——— */
-.title-western {
-  font-family: var(--font-western);
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55);
-}
+  /* séparateur de section : libellé + filet */
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-sc);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-sepia);
+  }
+  .ornament::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(241, 236, 226, 0.18), transparent);
+  }
 
-.ornament {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--color-sepia);
-}
-.ornament::before,
-.ornament::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, currentColor, transparent);
-}
+  /* trait de pinceau rouge, signature du menu RDR2 */
+  .brush {
+    background: linear-gradient(90deg, #b3121b, var(--color-blood) 50%, #b3121b);
+    clip-path: polygon(0 18%, 4% 4%, 30% 12%, 56% 0, 82% 10%, 99% 3%, 100% 60%, 97% 96%, 70% 86%, 44% 100%, 18% 88%, 2% 98%);
+  }
 
-/* trait de pinceau rouge façon menu RDR2 */
-.brush {
-  background:
-    radial-gradient(ellipse at 10% 50%, var(--color-blood) 30%, transparent 70%),
-    linear-gradient(90deg, transparent, var(--color-blood) 8%, var(--color-blood) 92%, transparent);
-  clip-path: polygon(0 35%, 3% 10%, 20% 18%, 45% 0, 70% 14%, 97% 4%, 100% 50%, 96% 92%, 72% 82%, 50% 100%, 25% 86%, 4% 96%);
-}
+  /* ——— Champs ——— */
+  .field {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(241, 236, 226, 0.12);
+    border-radius: var(--radius-ctl);
+    padding: 0.55rem 0.8rem;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .field::placeholder {
+    color: rgba(241, 236, 226, 0.35);
+  }
+  .field:focus {
+    border-color: rgba(208, 27, 37, 0.8);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 4px rgba(208, 27, 37, 0.18), 0 0 24px -6px rgba(208, 27, 37, 0.6);
+  }
+  select.field {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-sepia) 50%),
+      linear-gradient(135deg, var(--color-sepia) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 55%, calc(100% - 13px) 55%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2.2rem;
+  }
+  select.field option {
+    background: #17110d;
+    color: var(--color-ink);
+  }
 
-/* ——— Champs ——— */
-.field {
-  width: 100%;
-  background: rgba(255, 250, 235, 0.55);
-  border: 1px solid rgba(80, 50, 25, 0.45);
-  border-radius: 2px;
-  padding: 0.5rem 0.7rem;
-  font-family: var(--font-type);
-  font-size: 0.95rem;
-  color: var(--color-ink);
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-}
-.field::placeholder {
-  color: rgba(80, 55, 30, 0.55);
-}
-.field:focus {
-  border-color: var(--color-blood);
-  background: rgba(255, 250, 235, 0.85);
-  box-shadow: 0 0 0 3px rgba(168, 23, 28, 0.18);
-}
-select.field {
-  appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--color-sepia) 50%),
-    linear-gradient(135deg, var(--color-sepia) 50%, transparent 50%);
-  background-position: calc(100% - 16px) 55%, calc(100% - 11px) 55%;
-  background-size: 5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 2rem;
-}
+  /* ——— Tableaux ——— */
+  .ledger th {
+    font-family: var(--font-sc);
+    font-weight: normal;
+    letter-spacing: 0.14em;
+    text-align: left;
+    color: var(--color-sepia);
+    border-bottom: 1px solid rgba(241, 236, 226, 0.12);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+  }
+  .ledger td {
+    border-bottom: 1px solid rgba(241, 236, 226, 0.06);
+    padding: 0.6rem 0.75rem;
+    vertical-align: middle;
+  }
+  .ledger tbody tr {
+    transition: background 0.15s;
+  }
+  .ledger tbody tr:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
 
-/* ——— Tableaux ——— */
-.ledger th {
-  font-family: var(--font-sc);
-  font-weight: normal;
-  text-align: left;
-  color: var(--color-sepia);
-  border-bottom: 2px solid rgba(60, 35, 15, 0.55);
-  padding: 0.5rem 0.6rem;
-  font-size: 0.95rem;
-}
-.ledger td {
-  border-bottom: 1px dashed rgba(60, 35, 15, 0.3);
-  padding: 0.55rem 0.6rem;
-  vertical-align: middle;
-}
-.ledger tbody tr {
-  transition: background 0.15s;
-}
-.ledger tbody tr:hover {
-  background: rgba(120, 80, 30, 0.08);
-}
+  /* pastille de statut */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-sc);
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  }
+  .stamp::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+  }
 
-/* tampon */
-.stamp {
-  font-family: var(--font-western);
-  text-transform: uppercase;
-  border: 2px solid currentColor;
-  border-radius: 3px;
-  padding: 0.05rem 0.45rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  transform: rotate(-3deg);
-  display: inline-block;
-  opacity: 0.85;
-}
+  /* ——— Tuiles d'armes ——— */
+  .tile {
+    position: relative;
+    border-radius: var(--radius-tile);
+    background: linear-gradient(180deg, rgba(34, 24, 19, 0.7), rgba(12, 9, 7, 0.82));
+    border: 1px solid rgba(241, 236, 226, 0.08);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s ease, border-color 0.2s, box-shadow 0.2s;
+  }
+  .tile:hover {
+    transform: translateY(-3px);
+    border-color: rgba(241, 236, 226, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 18px 40px -20px rgba(208, 27, 37, 0.55);
+  }
+  .tile.is-selected {
+    border-color: rgba(241, 236, 226, 0.9);
+    box-shadow: 0 0 0 1px rgba(241, 236, 226, 0.9), 0 0 36px -8px rgba(241, 236, 226, 0.25);
+  }
+  .tile-glow {
+    position: absolute;
+    inset: 18% 20% auto;
+    height: 50%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(214, 165, 77, 0.16), transparent);
+    filter: blur(6px);
+    pointer-events: none;
+  }
 
-/* ——— Cartes boutique façon jeu ——— */
-.shop-card {
-  position: relative;
-  border-radius: 7px;
-  color: #fff;
-  background:
-    var(--grain),
-    radial-gradient(ellipse at 50% 30%, #6a3a1e 0%, #4a2612 45%, #2a130a 100%);
-  border: 2px solid #150a04;
-  box-shadow:
-    inset 0 0 0 2px #3a2010,
-    inset 0 0 0 3px #7a5230,
-    inset 0 0 18px rgba(0, 0, 0, 0.75),
-    0 6px 14px -4px rgba(0, 0, 0, 0.7);
-  font-family: "Times New Roman", Times, serif;
-  font-variant-numeric: lining-nums;
-  transition: box-shadow 0.2s;
-}
-.shop-card:hover {
-  box-shadow:
-    inset 0 0 0 2px #3a2010,
-    inset 0 0 0 3px #c89a55,
-    inset 0 0 18px rgba(0, 0, 0, 0.75),
-    0 10px 22px -6px rgba(0, 0, 0, 0.85),
-    0 0 0 1px rgba(240, 182, 64, 0.5);
-}
-/* coins ornementés */
-.shop-corner {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  z-index: 5;
-  border-color: #b98a4f;
-  pointer-events: none;
-}
-.shop-corner::after {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  background: #d9ad6a;
-  transform: rotate(45deg);
-}
-.shop-corner.tl { top: 5px; left: 5px; border-top: 2px solid; border-left: 2px solid; border-top-left-radius: 5px; }
-.shop-corner.tr { top: 5px; right: 5px; border-top: 2px solid; border-right: 2px solid; border-top-right-radius: 5px; }
-.shop-corner.bl { bottom: 5px; left: 5px; border-bottom: 2px solid; border-left: 2px solid; border-bottom-left-radius: 5px; }
-.shop-corner.br { bottom: 5px; right: 5px; border-bottom: 2px solid; border-right: 2px solid; border-bottom-right-radius: 5px; }
-.shop-corner.tl::after { top: 3px; left: 3px; }
-.shop-corner.tr::after { top: 3px; right: 3px; }
-.shop-corner.bl::after { bottom: 3px; left: 3px; }
-.shop-corner.br::after { bottom: 3px; right: 3px; }
-.shop-strip {
-  padding-top: 2px;
-  padding-bottom: 2px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.45));
-  border-top: 1px solid rgba(122, 82, 48, 0.8);
-  border-bottom: 1px solid rgba(122, 82, 48, 0.8);
-  text-shadow: 0 1px 2px #000;
-}
-.shop-step {
-  cursor: pointer;
-  color: #f0b640;
-  font-weight: bold;
-  font-size: 1.15rem;
-  line-height: 1;
-  padding: 0 0.3rem;
-  text-shadow: 0 1px 2px #000;
-  transition: color 0.15s, transform 0.1s;
-}
-.shop-step:hover {
-  color: #ffd97a;
-  transform: scale(1.2);
-}
-.shop-basket {
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 22px;
-  border-radius: 5px;
-  color: #3a1d05;
-  background: linear-gradient(180deg, #ffd27a 0%, #f0a43a 45%, #b8661a 100%);
-  border: 1px solid #5a2e08;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 3px rgba(0, 0, 0, 0.6);
-  transition: filter 0.15s;
-}
-.shop-basket:hover {
-  filter: brightness(1.12);
-}
+  /* barre de stat façon jeu */
+  .statbar {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(241, 236, 226, 0.1);
+    overflow: hidden;
+  }
+  .statbar > i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f1ece2, #fff);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+  }
 
-/* veinage bois posé sur le fond animé : le dégradé shader « brille » à travers les planches */
-.wood-overlay {
-  background-image:
-    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.55), transparent 60%),
-    radial-gradient(ellipse at center, transparent 50%, rgba(10, 6, 3, 0.45) 100%),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 180px),
-    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.02) 0 1px, transparent 1px 7px);
-  background-color: rgba(26, 18, 12, 0.12);
-}
+  /* touche clavier façon invite du jeu */
+  .keycap {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 8px;
+    border: 1.5px solid rgba(241, 236, 226, 0.85);
+    font-family: var(--font-sc);
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    color: var(--color-ink);
+    background: rgba(255, 255, 255, 0.04);
+  }
 
-/* scrollbar */
-.scroll-thin::-webkit-scrollbar {
-  width: 8px;
-}
-.scroll-thin::-webkit-scrollbar-thumb {
-  background: rgba(80, 50, 25, 0.4);
-  border-radius: 4px;
-}
+  /* voile posé sur le fond animé : vignette + fine grille high-tech */
+  .wood-overlay {
+    background-image:
+      radial-gradient(ellipse at center, transparent 40%, rgba(8, 5, 4, 0.7) 100%),
+      linear-gradient(rgba(241, 236, 226, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(241, 236, 226, 0.025) 1px, transparent 1px);
+    background-size: auto, 56px 56px, 56px 56px;
+    background-color: rgba(10, 7, 6, 0.35);
+  }
 
+  /* scrollbar */
+  .scroll-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    background: rgba(241, 236, 226, 0.15);
+    border-radius: 8px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -81,12 +81,12 @@ export default function Dashboard() {
                 {orders.slice(0, 8).map((o) => (
                   <tr key={o.id}>
                     <td className="font-type">{orderNo(o.number)}</td>
-                    <td className="font-type text-sm">{fmtDate(o.createdAt)}</td>
+                    <td className="font-type text-[17px] tracking-[.04em]">{fmtDate(o.createdAt)}</td>
                     <td className="text-lg">{o.clientName}</td>
                     <td>
                       <StatusStamp status={o.status} />
                     </td>
-                    <td className="text-right font-type text-lg">{money(o.total)}</td>
+                    <td className="text-right font-type text-2xl">{money(o.total)}</td>
                   </tr>
                 ))}
               </tbody>

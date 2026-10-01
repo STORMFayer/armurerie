@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
 import { hasDb, subscribe } from '@/lib/db'
 import { exportData, useStore } from '@/lib/store'
-import { clamp, cn, toNum } from '@/lib/utils'
+import { clamp, cn, isToday, money, toNum } from '@/lib/utils'
 import Caisse from '@/pages/Caisse'
 import Catalogue from '@/pages/Catalogue'
 import Clients from '@/pages/Clients'
@@ -39,6 +39,9 @@ export default function App() {
   const pending = useStore((s) => s.orders.filter((o) => o.status === 'en_attente').length)
   const cartCount = useStore((s) => s.cart.items.reduce((n, i) => n + i.qty, 0))
   const ready = useStore((s) => s.ready)
+  const todayTotal = useStore((s) =>
+    s.orders.filter((o) => (o.status === 'payee' || o.status === 'livree') && isToday(o.createdAt)).reduce((t, o) => t + o.total, 0),
+  )
 
   // Chargement depuis Supabase + synchro en direct avec les autres caisses
   useEffect(() => {
@@ -49,7 +52,7 @@ export default function App() {
   }, [])
 
   return (
-    <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabId)} className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-10 sm:px-6">
+    <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabId)} className="mx-auto flex min-h-screen max-w-[1600px] flex-col px-4 pb-10 sm:px-8">
       {webgl && (
         <FxBoundary>
           <Suspense fallback={null}>
@@ -58,37 +61,40 @@ export default function App() {
         </FxBoundary>
       )}
 
-      {/* ——— En-tête ——— */}
-      <header className="pt-6 pb-4 text-center">
-        {webgl && (
-          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} className="mx-auto mb-1 grid h-[92px] place-items-center">
-            <FxBoundary>
-              <Suspense fallback={null}>
-                <LiquidEmblem size={92} />
-              </Suspense>
-            </FxBoundary>
-          </motion.div>
-        )}
-        <motion.p initial={{ opacity: 0, letterSpacing: '0.6em' }} animate={{ opacity: 1, letterSpacing: '0.35em' }} transition={{ duration: 1 }} className="font-sc text-sm text-brass uppercase">
-          Armes · Munitions · Réparations
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: -10, filter: 'blur(6px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.15 }}
-          className="title-western mt-1 text-4xl text-parch sm:text-6xl"
-        >
-          {settings.shopName}
-        </motion.h1>
-        <p className="ornament mx-auto mt-2 max-w-md font-serif text-brass/80 italic">{settings.town}</p>
+      {/* ——— En-tête : titre à gauche, recette du jour à droite ——— */}
+      <header className="flex flex-wrap items-end justify-between gap-6 pt-7 pb-5">
+        <div className="flex items-center gap-4">
+          {webgl && (
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} className="hidden size-[84px] shrink-0 sm:block">
+              <FxBoundary>
+                <Suspense fallback={null}>
+                  <LiquidEmblem size={84} />
+                </Suspense>
+              </FxBoundary>
+            </motion.div>
+          )}
+          <div>
+            <motion.p initial={{ opacity: 0, letterSpacing: '0.5em' }} animate={{ opacity: 1, letterSpacing: '0.32em' }} transition={{ duration: 1 }} className="label text-[17px] text-sepia">
+              Armes · Munitions · Réparations
+            </motion.p>
+            <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="title-western text-[52px] text-ink sm:text-[76px]">
+              {settings.shopName.toUpperCase()}
+            </motion.h1>
+            <p className="mt-1 text-[16px] text-sepia italic">{settings.town}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="label text-[17px] text-sepia">Recette du jour</p>
+          <p className="font-type text-5xl tracking-[.02em] [text-shadow:0_0_30px_rgba(255,255,255,.12)]">{money(todayTotal)}</p>
+        </div>
       </header>
 
       {/* ——— Navigation style menu RDR2 ——— */}
       <nav className="sticky top-0 z-30 mb-6 pt-3 pb-2">
         <LiquidGlass
-          className="flex items-center justify-between gap-2 px-2 py-1"
-          fallbackClassName="rounded-2xl border border-brass/20 bg-[#1a120c]/80 backdrop-blur-md"
-          borderRadius={16}
+          className="flex items-center justify-between gap-2 px-2 py-1.5"
+          fallbackClassName="rounded-[20px] border border-white/10 bg-[#120c09]/80 backdrop-blur-md"
+          borderRadius={20}
           tintOpacity={0.22}
           refreshKey={`${tab}-${ready}`}
         >
@@ -98,8 +104,8 @@ export default function App() {
                 key={t.id}
                 value={t.id}
                 className={cn(
-                  'relative flex cursor-pointer items-center gap-2 px-4 py-2.5 font-sc text-lg whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-parch',
-                  tab === t.id ? 'text-parch' : 'text-parch/50 hover:text-parch/85',
+                  'relative flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2 font-sc text-[23px] tracking-[.14em] whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-white',
+                  tab === t.id ? 'text-white' : 'text-parch/55 hover:text-parch',
                 )}
               >
                 {tab === t.id && <motion.span layoutId="brush" className="brush absolute inset-x-0 inset-y-1 -z-0" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
@@ -112,7 +118,7 @@ export default function App() {
               </Tabs.Trigger>
             ))}
           </Tabs.List>
-          <button onClick={() => setSettingsOpen(true)} className="cursor-pointer rounded p-2 text-parch/60 transition hover:rotate-45 hover:text-brass" aria-label="Réglages">
+          <button onClick={() => setSettingsOpen(true)} className="mr-1 cursor-pointer rounded-xl p-2 text-parch/60 transition hover:rotate-45 hover:bg-white/10 hover:text-ink" aria-label="Réglages">
             <Settings2 size={22} />
           </button>
         </LiquidGlass>
@@ -136,7 +142,7 @@ export default function App() {
       </AnimatePresence>
       )}
 
-      <footer className="mt-10 text-center font-serif text-sm text-parch/35 italic">{hasDb ? 'Registre partagé en direct entre toutes les caisses — sauvegarde possible via ⚙.' : 'Données enregistrées dans ce navigateur — pensez à exporter une sauvegarde (⚙).'}</footer>
+      <footer className="mt-10 text-center text-sm text-sepia-2 italic">{hasDb ? 'Registre partagé en direct entre toutes les caisses — sauvegarde possible via ⚙.' : 'Données enregistrées dans ce navigateur — pensez à exporter une sauvegarde (⚙).'}</footer>
 
       <Modal open={settingsOpen} onOpenChange={setSettingsOpen} title="Réglages de la boutique">
         <SettingsForm onDone={() => setSettingsOpen(false)} />
@@ -146,7 +152,7 @@ export default function App() {
 }
 
 const Badge = ({ children }: { children: ReactNode }) => (
-  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brass px-1 font-type text-xs text-ink">{children}</span>
+  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-white px-1.5 font-type text-[13px] tracking-normal text-[#1a120c]">{children}</span>
 )
 
 function SettingsForm({ onDone }: { onDone: () => void }) {

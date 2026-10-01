@@ -6,11 +6,11 @@ import { StatusStamp } from './ui'
 export function Receipt({ order }: { order: Order }) {
   const settings = useStore((s) => s.settings)
   return (
-    <div className="print-area parchment relative mx-auto max-w-sm p-6 font-type text-ink">
+    <div className="print-area relative mx-auto max-w-sm rounded-2xl bg-[#f4efe6] p-6 font-serif text-[#1a130d] shadow-[0_20px_50px_-20px_rgba(0,0,0,.8)]">
       <div className="text-center">
-        <p className="font-western text-2xl">{settings.shopName}</p>
-        <p className="text-xs italic text-sepia">{settings.town}</p>
-        <p className="ornament my-2 text-xs">✦</p>
+        <p className="font-western text-4xl leading-none tracking-[.06em]">{settings.shopName.toUpperCase()}</p>
+        <p className="text-xs italic text-[#6b5e50]">{settings.town}</p>
+        <div className="mx-auto my-3 h-px w-24 bg-gradient-to-r from-transparent via-[#d01b25] to-transparent" />
         <p className="text-sm">
           {orderNo(order.number)} — {fmtDate(order.createdAt)}
         </p>
@@ -30,11 +30,11 @@ export function Receipt({ order }: { order: Order }) {
         </tbody>
       </table>
 
-      <div className="mt-3 space-y-0.5 border-t border-dashed border-sepia/60 pt-2 text-sm">
+      <div className="mt-3 space-y-0.5 border-t border-dashed border-[#1a130d]/25 pt-2 text-sm">
         <Line label="Sous-total" value={money(order.subtotal)} />
         {order.discount > 0 && <Line label={`Remise ${order.discountPct}%`} value={`− ${money(order.discount)}`} />}
         {order.tax > 0 && <Line label={`Taxe ${order.taxPct}%`} value={`+ ${money(order.tax)}`} />}
-        <div className="flex justify-between border-t-2 border-double border-sepia/60 pt-1 text-lg">
+        <div className="flex items-baseline justify-between border-t-2 border-double border-[#1a130d]/25 pt-1 font-western text-3xl tracking-[.04em]">
           <span>TOTAL</span>
           <span>{money(order.total)}</span>
         </div>
@@ -49,7 +49,7 @@ export function Receipt({ order }: { order: Order }) {
       {order.note && <p className="mt-3 text-xs italic">Note : {order.note}</p>}
 
       <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs italic text-sepia">Merci, et bonne route.</p>
+        <p className="text-xs italic text-[#6b5e50]">Merci, et bonne route.</p>
         <StatusStamp status={order.status} />
       </div>
     </div>
