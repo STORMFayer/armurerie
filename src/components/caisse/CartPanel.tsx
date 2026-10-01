@@ -200,7 +200,7 @@ export function CartPanel({
       <button
         disabled={empty || busy}
         onClick={() => onFinish('payee')}
-        className="brush mt-4 cursor-pointer py-3.5 text-center font-western text-[30px] tracking-[.2em] text-white drop-shadow-[0_10px_24px_rgba(208,27,37,.55)] transition hover:brightness-110 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-35"
+        className="mt-4 cursor-pointer rounded-2xl border border-white/15 bg-gradient-to-b from-[#e3262f] to-[#a3121a] py-3.5 text-center font-western text-[30px] tracking-[.2em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_14px_34px_-12px_rgba(208,27,37,.85)] transition hover:-translate-y-px hover:brightness-110 hover:shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_18px_40px_-12px_rgba(208,27,37,1)] active:translate-y-0 active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0"
       >
         ENCAISSER
       </button>
