@@ -267,6 +267,17 @@ select.field {
   filter: brightness(1.12);
 }
 
+/* veinage bois posé sur le fond animé : le dégradé shader « brille » à travers les planches */
+.wood-overlay {
+  background-image:
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.55), transparent 60%),
+    radial-gradient(ellipse at center, transparent 50%, rgba(10, 6, 3, 0.45) 100%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 180px),
+    repeating-linear-gradient(0deg, rgba(255, 220, 170, 0.025) 0 1px, transparent 1px 7px),
+    var(--grain);
+  background-color: rgba(26, 18, 12, 0.12);
+}
+
 /* scrollbar */
 .scroll-thin::-webkit-scrollbar {
   width: 8px;

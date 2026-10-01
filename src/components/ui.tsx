@@ -148,10 +148,10 @@ export function useConfirm() {
   return { ask, dialog }
 }
 
-export function Empty({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+export function Empty({ icon, children, vivid }: { icon: ReactNode; children: ReactNode; vivid?: boolean }) {
   return (
     <div className="flex flex-col items-center gap-2 py-10 text-center text-sepia">
-      <span className="opacity-60">{icon}</span>
+      <span className={vivid ? '' : 'opacity-60'}>{icon}</span>
       <p className="italic">{children}</p>
     </div>
   )

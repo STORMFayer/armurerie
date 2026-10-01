@@ -1,6 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import { lazy, Suspense } from 'react'
 import { Coins, Lightbulb, Minus, OctagonAlert, Plus, Printer, Search, ShoppingBag, Trash2, UserPlus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { hasWebGL } from '@/lib/motion'
+import { FxBoundary } from '@/components/fx/FxBoundary'
+
+const RevolverCylinder3D = lazy(() => import('@/components/fx/RevolverCylinder3D'))
+const webgl = hasWebGL()
 import { toast } from 'sonner'
 import { ClientForm } from '@/pages/Clients'
 import { ShopCard } from '@/components/ShopCard'
@@ -146,7 +152,22 @@ export default function Caisse() {
         <div className="my-4 border-t-2 border-double border-sepia/50" />
 
         {cart.items.length === 0 ? (
-          <Empty icon={<ShoppingBag size={30} />}>La note est vide. Cliquez sur un article.</Empty>
+          <Empty
+            vivid={webgl}
+            icon={
+              webgl ? (
+                <FxBoundary fallback={<ShoppingBag size={30} />}>
+                  <Suspense fallback={<ShoppingBag size={30} />}>
+                    <RevolverCylinder3D size={96} />
+                  </Suspense>
+                </FxBoundary>
+              ) : (
+                <ShoppingBag size={30} />
+              )
+            }
+          >
+            La note est vide. Cliquez sur un article.
+          </Empty>
         ) : (
           <ul className="max-h-[38vh] space-y-1 overflow-y-auto pr-1 scroll-thin">
             <AnimatePresence initial={false}>

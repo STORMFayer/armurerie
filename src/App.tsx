@@ -1,7 +1,7 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
 import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
 import { hasDb, subscribe } from '@/lib/db'
@@ -14,6 +14,14 @@ import Commandes from '@/pages/Commandes'
 import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
 import { useUi, type TabId } from '@/lib/ui'
+import { FxBoundary } from '@/components/fx/FxBoundary'
+import { LiquidGlass } from '@/components/fx/LiquidGlass'
+import { hasWebGL } from '@/lib/motion'
+
+// Effets visuels chargés à la demande (three.js / shaders sont lourds)
+const ShaderBackground = lazy(() => import('@/components/fx/ShaderBackground'))
+const LiquidEmblem = lazy(() => import('@/components/fx/LiquidEmblem'))
+const webgl = hasWebGL()
 
 const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }[] = [
   { id: 'caisse', label: 'Caisse', icon: <Coins size={18} />, page: () => <Caisse /> },
@@ -42,8 +50,25 @@ export default function App() {
 
   return (
     <Tabs.Root value={tab} onValueChange={(v) => setTab(v as TabId)} className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 pb-10 sm:px-6">
+      {webgl && (
+        <FxBoundary>
+          <Suspense fallback={null}>
+            <ShaderBackground />
+          </Suspense>
+        </FxBoundary>
+      )}
+
       {/* ——— En-tête ——— */}
-      <header className="pt-8 pb-4 text-center">
+      <header className="pt-6 pb-4 text-center">
+        {webgl && (
+          <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9 }} className="mx-auto mb-1 grid h-[92px] place-items-center">
+            <FxBoundary>
+              <Suspense fallback={null}>
+                <LiquidEmblem size={92} />
+              </Suspense>
+            </FxBoundary>
+          </motion.div>
+        )}
         <motion.p initial={{ opacity: 0, letterSpacing: '0.6em' }} animate={{ opacity: 1, letterSpacing: '0.35em' }} transition={{ duration: 1 }} className="font-sc text-sm text-brass uppercase">
           Armes · Munitions · Réparations
         </motion.p>
@@ -59,8 +84,14 @@ export default function App() {
       </header>
 
       {/* ——— Navigation style menu RDR2 ——— */}
-      <nav className="sticky top-0 z-30 -mx-4 mb-6 bg-gradient-to-b from-[#1a120c] via-[#1a120c]/95 to-transparent px-4 pt-2 pb-4 sm:-mx-6 sm:px-6">
-        <div className="flex items-center justify-between gap-2">
+      <nav className="sticky top-0 z-30 mb-6 pt-3 pb-2">
+        <LiquidGlass
+          className="flex items-center justify-between gap-2 px-2 py-1"
+          fallbackClassName="rounded-2xl border border-brass/20 bg-[#1a120c]/80 backdrop-blur-md"
+          borderRadius={16}
+          tintOpacity={0.22}
+          refreshKey={`${tab}-${ready}`}
+        >
           <Tabs.List className="flex flex-1 gap-1 overflow-x-auto scroll-thin" aria-label="Sections">
             {TABS.map((t) => (
               <Tabs.Trigger
@@ -84,8 +115,7 @@ export default function App() {
           <button onClick={() => setSettingsOpen(true)} className="cursor-pointer rounded p-2 text-parch/60 transition hover:rotate-45 hover:text-brass" aria-label="Réglages">
             <Settings2 size={22} />
           </button>
-        </div>
-        <div className="mt-1 h-px bg-gradient-to-r from-transparent via-brass/40 to-transparent" />
+        </LiquidGlass>
       </nav>
 
       {!ready ? (
