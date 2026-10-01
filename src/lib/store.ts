@@ -36,7 +36,6 @@ interface State {
   // caisse
   addToCart: (p: Product, qty?: number) => void
   setQty: (productId: string, qty: number) => void
-  setSerial: (productId: string, index: number, value: string) => void
   removeFromCart: (productId: string) => void
   setCart: (patch: Partial<Cart>) => void
   clearCart: () => void
@@ -136,19 +135,7 @@ export const useStore = create<State>()(
             items:
               qty <= 0
                 ? s.cart.items.filter((i) => i.productId !== productId)
-                : s.cart.items.map((i) => (i.productId === productId ? { ...i, qty, serials: i.serials?.slice(0, qty) } : i)),
-          },
-        })),
-      setSerial: (productId, index, value) =>
-        set((s) => ({
-          cart: {
-            ...s.cart,
-            items: s.cart.items.map((i) => {
-              if (i.productId !== productId) return i
-              const serials = [...(i.serials ?? [])]
-              serials[index] = value
-              return { ...i, serials }
-            }),
+                : s.cart.items.map((i) => (i.productId === productId ? { ...i, qty } : i)),
           },
         })),
       removeFromCart: (productId) => set((s) => ({ cart: { ...s.cart, items: s.cart.items.filter((i) => i.productId !== productId) } })),
@@ -166,12 +153,7 @@ export const useStore = create<State>()(
           number: nextOrderNumber,
           clientId: client?.id ?? null,
           clientName: client?.name ?? 'Client de passage',
-          // numéros de série nettoyés, un par exemplaire
-          items: cart.items.map((i) => {
-            const serials = (i.serials ?? []).slice(0, i.qty).map((x) => (x ?? '').trim()).filter(Boolean)
-            const { serials: _s, ...rest } = i
-            return serials.length ? { ...rest, serials } : rest
-          }),
+          items: cart.items,
           discountPct: cart.discountPct,
           taxPct: settings.taxPct,
           ...totals,

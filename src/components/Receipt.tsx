@@ -23,7 +23,6 @@ export function Receipt({ order }: { order: Order }) {
             <tr key={i.productId} className="align-top">
               <td className="pr-2">
                 {i.qty} × {i.name}
-                {i.serials?.length ? <span className="block text-[11px] text-sepia">N° série : {i.serials.join(', ')}</span> : null}
               </td>
               <td className="text-right whitespace-nowrap">{money(i.price * i.qty)}</td>
             </tr>

@@ -7,7 +7,7 @@ import { useStore } from '@/lib/store'
 import { useUi } from '@/lib/ui'
 import type { Client } from '@/lib/types'
 import { ItemArt } from '@/components/ItemArt'
-import { cn, fmtDate, money, needsSerial, orderNo } from '@/lib/utils'
+import { cn, fmtDate, isWeapon, money, orderNo } from '@/lib/utils'
 
 export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: Client) => void }) {
   const saveClient = useStore((s) => s.saveClient)
@@ -83,8 +83,7 @@ export default function Clients() {
     return m
   }, [orders])
 
-  const serialsOf = (id: string) => orders.filter((o) => o.clientId === id).flatMap((o) => o.items.flatMap((i) => i.serials ?? []))
-  const list = clients.filter((c) => [c.name, c.phone, ...serialsOf(c.id)].join(' ').toLowerCase().includes(q.toLowerCase()))
+const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   async function remove(c: Client) {
     if (await ask(`Rayer ${c.name} du registre ? Ses commandes resteront dans l'historique.`)) {
@@ -95,11 +94,11 @@ export default function Clients() {
 
   const history = viewing ? orders.filter((o) => o.clientId === viewing.id) : []
 
-  // Armes achetées par le client : une ligne par exemplaire, avec son numéro de série
+  // Armes achetées par le client : une ligne par exemplaire
   const weapons = history.flatMap((o) =>
     o.items
-      .filter((i) => i.serials?.length || needsSerial(products.find((p) => p.id === i.productId)?.category))
-      .flatMap((i) => Array.from({ length: i.qty }, (_, k) => ({ key: `${o.id}-${i.productId}-${k}`, item: i, serial: i.serials?.[k], order: o }))),
+      .filter((i) => isWeapon(products.find((p) => p.id === i.productId)?.category))
+      .flatMap((i) => Array.from({ length: i.qty }, (_, k) => ({ key: `${o.id}-${i.productId}-${k}`, item: i, order: o }))),
   )
 
   return (
@@ -114,7 +113,7 @@ export default function Clients() {
     >
       <div className="relative mb-4 max-w-md">
         <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={16} />
-        <input className="field pl-9" placeholder="Nom, téléphone, n° de série d'une arme…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="field pl-9" placeholder="Nom, téléphone…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
 
       {list.length === 0 ? (
@@ -189,7 +188,7 @@ export default function Clients() {
               <Empty icon={<Crosshair size={28} />}>Aucune arme achetée.</Empty>
             ) : (
               <ul className="divide-y divide-dashed divide-sepia/30">
-                {weapons.map(({ key, item, serial, order }) => {
+                {weapons.map(({ key, item, order }) => {
                   const product = products.find((p) => p.id === item.productId)
                   const cancelled = order.status === 'annulee'
                   return (
@@ -204,13 +203,6 @@ export default function Clients() {
                           {cancelled && ' · annulée'}
                         </p>
                       </div>
-                      {serial ? (
-                        <span className="rounded-[2px] border border-sepia/40 bg-[rgba(255,250,235,.6)] px-2 py-0.5 font-type text-sm tracking-wide select-all" title="N° de série">
-                          {serial}
-                        </span>
-                      ) : (
-                        <span className="text-xs italic text-sepia-2">sans n° de série</span>
-                      )}
                     </li>
                   )
                 })}

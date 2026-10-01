@@ -36,8 +36,6 @@ export interface OrderItem {
   name: string
   price: number
   qty: number
-  /** numéros de série (un par exemplaire) — obligatoires pour les armes */
-  serials?: string[]
 }
 
 export type OrderStatus = 'en_attente' | 'payee' | 'livree' | 'annulee'
