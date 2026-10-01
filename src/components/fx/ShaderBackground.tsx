@@ -11,8 +11,8 @@ export default function ShaderBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
       <ShaderGradientCanvas
-        style={{ position: 'absolute', inset: 0 }}
-        pixelDensity={1}
+        style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh' }}
+        pixelDensity={Math.min(2, window.devicePixelRatio || 1) * 1.25}
         fov={45}
         pointerEvents="none"
         lazyLoad={false}
@@ -22,20 +22,20 @@ export default function ShaderBackground() {
           animate={still ? 'off' : 'on'}
           uTime={0.2}
           uSpeed={0.06}
-          uStrength={3}
-          uDensity={1.3}
-          uFrequency={5.5}
+          uStrength={1.4}
+          uDensity={0.9}
+          uFrequency={2.2}
           uAmplitude={0}
-          color1="#3d180a"
-          color2="#a3161a"
+          color1="#2e140a"
+          color2="#6e1310"
           color3="#b5782a"
-          brightness={1.05}
-          grain="on"
+          brightness={0.9}
+          grain="off"
           lightType="3d"
           reflection={0.1}
           cAzimuthAngle={180}
           cPolarAngle={90}
-          cDistance={3.6}
+          cDistance={2.2}
           cameraZoom={1}
           positionX={0}
           positionY={0}
