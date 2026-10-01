@@ -37,8 +37,8 @@ export const SEED_PRODUCTS: Product[] = [
   // Fusils à pompe
   p('pom-pump', 'Fusil à pompe', 'Fusils à pompe', 309.75),
   p('pom-double', 'Double canon', 'Fusils à pompe', 362.25),
-  p('pom-semi', 'Pompe semi-auto', 'Fusils à pompe', 291.5),
-  p('pom-sawed', 'Canon scié', 'Fusils à pompe', 286),
+  p('pom-semi', 'Pompe semi-auto', 'Fusils à pompe', 277.5),
+  p('pom-sawed', 'Canon scié', 'Fusils à pompe', 272),
   p('pom-elephant', 'Fusil éléphant', 'Fusils à pompe', 330),
   p('pom-repeating', 'Pompe à répétition', 'Fusils à pompe', 258.5),
   // Armes de jet & blanches
@@ -58,8 +58,8 @@ export const SEED_PRODUCTS: Product[] = [
   p('mun-fus', 'Munitions de fusil normales', 'Munitions', 0.2),
   p('mun-elephant', 'Munitions de fusil à éléphant', 'Munitions', 0.2),
   p('mun-pom', 'Munitions de fusil à pompe normales', 'Munitions', 0.2),
-  p('mun-knife', 'Munitions de couteaux de lancer', 'Munitions', 0.4),
-  p('mun-hatchet', 'Munitions de hachette', 'Munitions', 0.4),
+  p('mun-knife', 'Munitions de couteaux de lancer', 'Munitions', 0.35),
+  p('mun-hatchet', 'Munitions de hachette', 'Munitions', 0.35),
   // Accessoires
   p('acc-oil', 'Huile pour arme', 'Accessoires', 0.2),
   p('acc-cuffs', 'Menottes', 'Accessoires', 1.25),
