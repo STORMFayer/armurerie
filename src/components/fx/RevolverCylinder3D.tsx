@@ -41,10 +41,10 @@ function Cylinder({ spin, finish }: { spin: boolean; finish: keyof typeof FINISH
   )
 }
 
-export default function RevolverCylinder3D({ size = 96, finish = 'brass' }: { size?: number; finish?: keyof typeof FINISH }) {
+export default function RevolverCylinder3D({ size = 96, finish = 'brass', paused = false }: { size?: number; finish?: keyof typeof FINISH; paused?: boolean }) {
   return (
     <div style={{ width: size, height: size }} aria-hidden="true">
-      <Canvas camera={{ position: [0, 2.2, 2.6], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true, antialias: true }}>
+      <Canvas frameloop={paused || prefersReducedMotion() ? 'demand' : 'always'} camera={{ position: [0, 2.2, 2.6], fov: 40 }} dpr={[1, 1.5]} gl={{ alpha: true, antialias: true, powerPreference: 'low-power' }}>
         <ambientLight intensity={1.4} />
         <hemisphereLight args={['#ffe9c4', '#3a1a0b', 1.2]} />
         <directionalLight position={[3, 4, 2]} intensity={3.2} color={FINISH[finish].light} />

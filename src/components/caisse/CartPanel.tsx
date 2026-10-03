@@ -1,16 +1,16 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Lightbulb, Minus, OctagonAlert, Plus, ShoppingBag, UserPlus, X } from 'lucide-react'
+import { Lightbulb, Minus, OctagonAlert, Plus, UserPlus, X } from 'lucide-react'
 import { lazy, Suspense, useState } from 'react'
 import { FxBoundary } from '@/components/fx/FxBoundary'
 import { Button, Empty, Field } from '@/components/ui'
 import type { WeaponSheet } from '@/lib/guide'
-import { hasWebGL } from '@/lib/motion'
+import { useFullFx, useWindowActive } from '@/lib/perf'
+import { StaticEmblem } from '@/components/fx/StaticEmblem'
 import { useStore } from '@/lib/store'
 import type { Product } from '@/lib/types'
 import { clamp, cn, computeTotals, money, orderNo, round2, toNum } from '@/lib/utils'
 
 const RevolverCylinder3D = lazy(() => import('@/components/fx/RevolverCylinder3D'))
-const webgl = hasWebGL()
 
 /** La note en cours : client, articles, conseils, total et encaissement. */
 export function CartPanel({
@@ -44,6 +44,8 @@ export function CartPanel({
   const client = clients.find((c) => c.id === cart.clientId)
   const quickCash = [5, 10, 20, 50, 100, 500].filter((v) => v >= totals.total * 0.2).slice(0, 4)
   const empty = cart.items.length === 0
+  const fullFx = useFullFx()
+  const active = useWindowActive()
 
   return (
     <section className="glass-panel flex flex-col p-5 lg:sticky lg:top-24">
@@ -70,16 +72,16 @@ export function CartPanel({
 
       {empty ? (
         <Empty
-          vivid={webgl}
+          vivid
           icon={
-            webgl ? (
-              <FxBoundary fallback={<ShoppingBag size={30} />}>
-                <Suspense fallback={<ShoppingBag size={30} />}>
-                  <RevolverCylinder3D size={92} />
+            fullFx ? (
+              <FxBoundary fallback={<StaticEmblem size={64} />}>
+                <Suspense fallback={<StaticEmblem size={64} />}>
+                  <RevolverCylinder3D size={92} paused={!active} />
                 </Suspense>
               </FxBoundary>
             ) : (
-              <ShoppingBag size={30} />
+              <StaticEmblem size={64} />
             )
           }
         >

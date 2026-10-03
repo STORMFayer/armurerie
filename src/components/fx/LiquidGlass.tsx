@@ -16,6 +16,7 @@ export function LiquidGlass({
   borderRadius = 16,
   tintOpacity = 0.18,
   refreshKey,
+  enabled = true,
 }: {
   children: ReactNode
   className?: string
@@ -23,12 +24,13 @@ export function LiquidGlass({
   borderRadius?: number
   tintOpacity?: number
   refreshKey?: unknown
+  enabled?: boolean
 }) {
   const host = useRef<HTMLDivElement>(null)
   const [target, setTarget] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (!host.current || !hasWebGL()) return
+    if (!host.current || !enabled || !hasWebGL()) return
     const glass = new Container({ borderRadius, type: 'rounded', tintOpacity })
     const el = glass.element
     // la mise en page est gérée par nos classes, pas par glass.css
@@ -57,9 +59,9 @@ export function LiquidGlass({
       glass.destroy()
       setTarget(null)
     }
-    // options fixées à la création
+    // options fixées à la création ; on (dé)monte le verre quand le mode change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [enabled])
 
   // nouvelle capture quand le contenu de la page change (onglet, données…)
   useEffect(() => {

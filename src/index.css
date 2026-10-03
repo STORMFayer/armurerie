@@ -277,6 +277,17 @@ body {
   }
 }
 
+/* ——— Mode éco (par défaut) : pas de flou d'arrière-plan, le plus coûteux pour la carte graphique ——— */
+html.fx-eco .glass-panel,
+html.fx-eco .glass-container,
+html.fx-eco [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.fx-eco .glass-panel {
+  background: linear-gradient(180deg, rgba(30, 21, 17, 0.94), rgba(14, 10, 8, 0.96));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

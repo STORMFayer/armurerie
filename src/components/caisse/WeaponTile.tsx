@@ -19,8 +19,7 @@ export function WeaponTile({
   onAdd: () => void
 }) {
   return (
-    <motion.div
-      layout
+    <div
       role="button"
       tabIndex={0}
       onClick={onSelect}
@@ -61,6 +60,6 @@ export function WeaponTile({
           <Plus size={16} />
         </button>
       </div>
-    </motion.div>
+    </div>
   )
 }

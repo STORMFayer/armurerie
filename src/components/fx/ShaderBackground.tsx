@@ -12,7 +12,7 @@ export default function ShaderBackground() {
     <div className="pointer-events-none fixed inset-0 -z-10" aria-hidden="true">
       <ShaderGradientCanvas
         style={{ position: 'absolute', inset: 0, width: '100vw', height: '100vh' }}
-        pixelDensity={Math.min(2, window.devicePixelRatio || 1) * 1.25}
+        pixelDensity={Math.min(1.5, window.devicePixelRatio || 1)}
         fov={45}
         pointerEvents="none"
         lazyLoad={false}
