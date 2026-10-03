@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { toast } from 'sonner'
+import { SEED_PRODUCTS } from './seed'
 import { CATEGORIES, type Client, type Order, type OrderItem, type OrderStatus, type Product, type Settings } from './types'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -87,6 +88,9 @@ const fromOrder = (o: Omit<Order, 'number'> & { number?: number }) => ({
   created_at: new Date(o.createdAt).toISOString(),
 })
 
+const SEED_ORDER = new Map(SEED_PRODUCTS.map((p, i) => [p.id, i]))
+const seedRank = (id: string) => SEED_ORDER.get(id) ?? 9999
+
 const toSettings = (r: any): Settings => ({ shopName: r.shop_name, town: r.town, taxPct: num(r.tax_pct) })
 
 function fail(error: { message: string } | null) {
@@ -115,7 +119,8 @@ export async function fetchAll(): Promise<Snapshot | null> {
   return {
     products: (p.data ?? [])
       .map(toProduct)
-      .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category) || a.name.localeCompare(b.name, 'fr')),
+      // ordre de la grille officielle (seed), puis alphabétique pour les articles ajoutés à la main
+      .sort((a, b) => CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category) || seedRank(a.id) - seedRank(b.id) || a.name.localeCompare(b.name, 'fr')),
     clients: (c.data ?? []).map(toClient),
     orders: (o.data ?? []).map(toOrder),
     settings: s.data ? toSettings(s.data) : null,

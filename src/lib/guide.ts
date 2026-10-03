@@ -402,7 +402,7 @@ export const SHEETS: WeaponSheet[] = [
     id: 'knife',
     family: 'Armes blanches',
     name: 'Couteaux',
-    productIds: ['bl-knife', 'bl-merchant', 'bl-rustic'],
+    productIds: ['bl-knife', 'bl-rustic', 'bl-cultist'],
     keywords: ['couteau'],
     tags: ['chasse'],
     summary: 'On peut dépecer avec les couteaux.',

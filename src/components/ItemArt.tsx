@@ -228,6 +228,8 @@ const ART: Record<Kind, { vb: string; body: ReactNode }> = {
 function customIcon(name: string): LucideIcon {
   const n = name.toLowerCase()
   if (n.includes('lunette')) return ScanSearch
+  if (n.includes('esthétique')) return Paintbrush
+  if (n.includes('amélioration')) return Wrench
   if (n.includes('gravure')) return PenTool
   if (n.includes('teinte')) return Paintbrush
   if (n.includes('matériau')) return Gem
