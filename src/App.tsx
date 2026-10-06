@@ -20,16 +20,16 @@ import Stock from '@/pages/Stock'
 import Compta from '@/pages/Compta'
 import { isCritical, subscribeStock, useStock } from '@/lib/stock'
 import { subscribeLedger, useLedger } from '@/lib/ledger'
+import { subscribeStaff, useStaff } from '@/lib/staff'
+import { SellerPicker, StaffSetting } from '@/components/Staff'
 import { subscribeExtras, useExtras } from '@/lib/extras'
 import { useUi, type TabId } from '@/lib/ui'
 import { FxBoundary } from '@/components/fx/FxBoundary'
 import { LiquidGlass } from '@/components/fx/LiquidGlass'
-import { StaticEmblem } from '@/components/fx/StaticEmblem'
 import { useFullFx, useFx, useFxClass, useWindowActive } from '@/lib/perf'
 
 // Effets visuels chargés à la demande (three.js / shaders sont lourds)
 const ShaderBackground = lazy(() => import('@/components/fx/ShaderBackground'))
-const LiquidEmblem = lazy(() => import('@/components/fx/LiquidEmblem'))
 
 const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }[] = [
   { id: 'caisse', label: 'Caisse', icon: <Coins size={18} />, page: () => <Caisse /> },
@@ -71,7 +71,11 @@ export default function App() {
     const loadLedger = useLedger.getState().load
     loadLedger()
     const offLedger = subscribeLedger(loadLedger)
+    const loadStaff = useStaff.getState().load
+    loadStaff()
+    const offStaff = subscribeStaff(loadStaff)
     return () => {
+      offStaff()
       offLedger()
       off()
       offExtras()
@@ -96,33 +100,23 @@ export default function App() {
         </FxBoundary>
       )}
 
-      {/* ——— En-tête : titre à gauche, recette du jour à droite ——— */}
-      <header className="flex flex-wrap items-end justify-between gap-6 pt-7 pb-5">
-        <div className="flex items-center gap-4">
-          <div className="hidden size-[84px] shrink-0 sm:block">
-            {fullFx ? (
-              <FxBoundary fallback={<StaticEmblem size={84} />}>
-                <Suspense fallback={<StaticEmblem size={84} />}>
-                  <LiquidEmblem size={84} paused={!active} />
-                </Suspense>
-              </FxBoundary>
-            ) : (
-              <StaticEmblem size={84} />
-            )}
+      <div className="site-frame" aria-hidden="true" />
+
+      {/* ——— En-tête : bannière de la boutique, vendeur à gauche, recette du jour à droite ——— */}
+      <header className="relative mt-5 mb-5 overflow-hidden rounded-[22px] border border-[#5a1414]/60 shadow-[0_30px_60px_-30px_rgba(0,0,0,.9)]">
+        <img
+          src={`${import.meta.env.BASE_URL}img/banner.webp`}
+          alt=""
+          className="block h-40 w-full object-cover object-[50%_46%] sm:h-[250px] lg:h-[300px]"
+          draggable={false}
+        />
+        <h1 className="sr-only">{settings.shopName}</h1>
+        <div className="pointer-events-none flex flex-wrap items-end justify-between gap-3 bg-[#0b0504] p-3 sm:absolute sm:inset-x-0 sm:bottom-0 sm:bg-transparent sm:px-6 sm:pb-4 [&>*]:pointer-events-auto">
+          <SellerPicker />
+          <div className="text-right">
+            <p className="label text-[14px] text-sepia [text-shadow:0_1px_6px_#000]">Recette du jour</p>
+            <p className="font-type text-4xl tracking-[.02em] sm:text-[44px] [text-shadow:0_2px_16px_#000,0_0_4px_#000]">{money(todayTotal)}</p>
           </div>
-          <div>
-            <motion.p initial={{ opacity: 0, letterSpacing: '0.5em' }} animate={{ opacity: 1, letterSpacing: '0.32em' }} transition={{ duration: 1 }} className="label text-[17px] text-sepia">
-              Armes · Munitions · Réparations
-            </motion.p>
-            <motion.h1 initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="title-western text-[52px] text-ink sm:text-[76px]">
-              {settings.shopName.toUpperCase()}
-            </motion.h1>
-            <p className="mt-1 text-[16px] text-sepia italic">{settings.town}</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="label text-[17px] text-sepia">Recette du jour</p>
-          <p className="font-type text-5xl tracking-[.02em] [text-shadow:0_0_30px_rgba(255,255,255,.12)]">{money(todayTotal)}</p>
         </div>
       </header>
 
@@ -261,6 +255,7 @@ function SettingsForm({ onDone }: { onDone: () => void }) {
         </Button>
       </div>
 
+      <StaffSetting />
       <FxSetting />
 
       <p className="ornament pt-2 font-sc">Données</p>

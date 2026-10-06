@@ -44,9 +44,13 @@ export default function Compta() {
         byProduct.set(i.productId, row)
       }
     }
+    // ventes par vendeur (montant encaissé)
+    const bySeller = new Map<string, number>()
+    for (const o of sales) bySeller.set(o.seller ?? 'Non renseigné', (bySeller.get(o.seller ?? 'Non renseigné') ?? 0) + o.total)
+    const sellers = [...bySeller].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
     const profit = revenue - cost
     const rows = [...byProduct.values()].sort((a, b) => b.gross - b.cost - (a.gross - a.cost))
-    return { count: sales.length, revenue, discounts, cost, profit, margin: revenue ? (profit / revenue) * 100 : 0, rows, estimated }
+    return { sellers, count: sales.length, revenue, discounts, cost, profit, margin: revenue ? (profit / revenue) * 100 : 0, rows, estimated }
   }, [orders, products, materials, period])
 
   // marge unitaire de chaque article ayant une fiche de fabrication
@@ -85,6 +89,10 @@ export default function Compta() {
         <Stat label="Bénéfice net" value={money(d.profit)} sub={d.estimated ? 'Certaines anciennes ventes estimées' : 'Ventes payées / livrées'} icon={<TrendingUp size={24} />} />
         <Stat label="Marge" value={`${d.margin.toFixed(1)} %`} sub="Bénéfice / chiffre d'affaires" icon={<Percent size={24} />} />
       </div>
+
+      <ChartCard title="Ventes par vendeur" subtitle="Montant encaissé sur la période">
+        <HBars rows={d.sellers} />
+      </ChartCard>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartCard title="Articles les plus rentables" subtitle="Bénéfice sur la période">

@@ -66,6 +66,8 @@ export interface Order {
   /** partenaire appliqué à la vente et montant de sa remise (inclus dans discount) */
   partnerName?: string | null
   partnerDiscount?: number
+  /** employé qui a fait la vente */
+  seller?: string | null
 }
 
 export interface Settings {

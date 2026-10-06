@@ -97,8 +97,9 @@ export function buildJournal(orders: Order[], products: Product[], manual: Ledge
     auto.push({
       id: `v-${o.id}`,
       kind: 'vente',
-      author: o.clientName,
-      label: `Vente ${orderNo(o.number)} — ${o.items.map((i) => `${i.qty}× ${i.name}`).join(', ')}`,
+      // comme en jeu : l'auteur est l'employé, le client apparaît dans le détail
+      author: o.seller ?? '—',
+      label: `Vente ${orderNo(o.number)} à ${o.clientName} — ${o.items.map((i) => `${i.qty}× ${i.name}`).join(', ')}`,
       amount: o.total,
       createdAt: o.createdAt,
       manual: false,

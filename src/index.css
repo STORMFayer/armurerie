@@ -41,13 +41,48 @@ body {
   color: var(--color-ink);
   font-family: var(--font-serif);
   font-size: 17px;
-  background-color: var(--color-wood);
+  /* ambiance de la bannière : noir bordeaux, halo rouge sombre, fines rayures verticales */
+  background-color: #070201;
   background-image:
-    radial-gradient(ellipse at 15% -10%, rgba(160, 30, 20, 0.35), transparent 55%),
-    radial-gradient(ellipse at 95% 110%, rgba(181, 120, 42, 0.18), transparent 55%),
-    radial-gradient(ellipse at center, #22150f 0%, #0e0a08 75%);
+    radial-gradient(ellipse 70% 55% at 50% 38%, rgba(92, 14, 12, 0.55), transparent 70%),
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.9), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 5px),
+    radial-gradient(ellipse at center, #1a0605 0%, #070201 80%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
+}
+
+/* cadre rouge fin façon bannière (fixe, ne gêne pas les clics) */
+.site-frame {
+  position: fixed;
+  inset: 10px;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid rgba(150, 22, 20, 0.45);
+  box-shadow: inset 0 0 0 4px rgba(7, 2, 1, 0.9), inset 0 0 0 5px rgba(150, 22, 20, 0.22);
+}
+.site-frame::before,
+.site-frame::after {
+  content: "❦";
+  position: absolute;
+  color: rgba(170, 30, 26, 0.6);
+  font-size: 22px;
+  line-height: 1;
+}
+.site-frame::before {
+  top: 6px;
+  left: 9px;
+  transform: rotate(-135deg);
+}
+.site-frame::after {
+  right: 9px;
+  bottom: 6px;
+  transform: rotate(45deg);
+}
+@media (max-width: 640px) {
+  .site-frame {
+    display: none;
+  }
 }
 
 ::selection {

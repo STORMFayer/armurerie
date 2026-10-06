@@ -14,6 +14,7 @@ import { CATEGORIES, type Category, type Order, type Product } from '@/lib/types
 import { cartTotals, useExtras } from '@/lib/extras'
 import { cn, money, toNum } from '@/lib/utils'
 import { ClientForm } from '@/pages/Clients'
+import { useStaff } from '@/lib/staff'
 
 type View = Category | 'Tout'
 
@@ -65,6 +66,11 @@ export default function Caisse() {
 
   async function finish(status: 'payee' | 'en_attente') {
     if (!cart.items.length || busy) return
+    const st = useStaff.getState()
+    if (st.available && !st.currentId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return toast.error('Choisis d’abord qui vend (« Vendeur » en haut de la page).')
+    }
     if (status === 'payee' && received && receivedNum < totals.total) return toast.error('Le montant reçu ne couvre pas la note.')
     if (forbidden.length && !(await ask(`${forbidden.map((f) => f.name).join(', ')} : arme à ne jamais vendre (formation). Vendre quand même ?`))) return
     if (client && !client.licenseValid && cart.items.some((i) => !['Munitions', 'Accessoires', 'Personnalisation'].includes(products.find((p) => p.id === i.productId)?.category ?? '')))

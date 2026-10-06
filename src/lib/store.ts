@@ -4,6 +4,7 @@ import { db, fetchAll, hasDb } from './db'
 import { SEED_PRODUCTS } from './seed'
 import type { Client, Order, OrderItem, OrderStatus, Product, Settings } from './types'
 import { cartTotals, useExtras } from './extras'
+import { currentSellerName } from './staff'
 import { moveStockFor, unitCost, useStock } from './stock'
 import { round2, uid } from './utils'
 
@@ -189,6 +190,7 @@ export const useStore = create<State>()(
           note: cart.note,
           createdAt: Date.now(),
           partnerName: partner?.name ?? null,
+          seller: currentSellerName(),
           partnerDiscount,
         }
         let order = draft

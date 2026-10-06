@@ -21,7 +21,7 @@ export default function Commandes() {
   const list = orders.filter(
     (o) =>
       (filter === 'toutes' || o.status === filter) &&
-      [orderNo(o.number), o.clientName, ...o.items.map((i) => i.name)].join(' ').toLowerCase().includes(q.toLowerCase()),
+      [orderNo(o.number), o.clientName, ...o.items.map((i) => i.name), o.seller ?? ''].join(' ').toLowerCase().includes(q.toLowerCase()),
   )
   const current = orders.find((o) => o.id === open) ?? null
   const pendingTotal = orders.filter((o) => o.status === 'en_attente').reduce((s, o) => s + o.total, 0)
@@ -78,6 +78,7 @@ export default function Commandes() {
                 <th>N°</th>
                 <th>Date</th>
                 <th>Client</th>
+                <th>Vendeur</th>
                 <th>Articles</th>
                 <th>Statut</th>
                 <th className="text-right!">Total</th>
@@ -89,6 +90,7 @@ export default function Commandes() {
                   <td className="font-type">{orderNo(o.number)}</td>
                   <td className="font-type text-[17px] tracking-[.04em] whitespace-nowrap">{fmtDate(o.createdAt)}</td>
                   <td className="text-lg">{o.clientName}</td>
+                  <td className="text-[16px] text-sepia">{o.seller ?? '—'}</td>
                   <td className="max-w-xs truncate text-sm text-sepia">{o.items.map((i) => `${i.qty}× ${i.name}`).join(', ')}</td>
                   <td>
                     <StatusStamp status={o.status} />

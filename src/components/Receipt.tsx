@@ -15,6 +15,7 @@ export function Receipt({ order }: { order: Order }) {
           {orderNo(order.number)} — {fmtDate(order.createdAt)}
         </p>
         <p className="text-sm">Client : {order.clientName}</p>
+        {order.seller && <p className="text-sm">Vendeur : {order.seller}</p>}
       </div>
 
       <table className="mt-4 w-full text-sm">
