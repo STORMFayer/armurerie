@@ -12,6 +12,8 @@ import { ExtrasUnavailable } from '@/pages/Partenaires'
 
 /* Lots de la tombola en cours et gagnants déjà tirés (gardés sur ce PC : le tirage se fait sur une seule caisse). */
 interface LotResult {
+  /** index du lot dans la liste (absent sur les anciens tirages = ordre de tirage) */
+  lot?: number
   prize: string
   winner: string
   winnerTickets: number
@@ -37,13 +39,19 @@ export default function Tombola() {
   const { lots, results, onePerPerson, ticketPrice, set: setLots } = useLots()
   const [rolling, setRolling] = useState<string | null>(null)
   const [winner, setWinner] = useState<RaffleEntry | null>(null)
+  const [selected, setSelected] = useState<number | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
   const { ask, dialog } = useConfirm()
 
   const total = entries.reduce((s, e) => s + e.tickets, 0)
   // sans lot saisi : un seul tirage « libre », comme avant
   const plannedLots = lots.length ? lots : ['']
-  const nextLot = results.length < plannedLots.length ? plannedLots[results.length] : null
+  const resultOf = new Map(results.map((r, i) => [r.lot ?? i, r]))
+  const remaining = plannedLots.map((_, i) => i).filter((i) => !resultOf.has(i))
+  // lot choisi par l'utilisateur, sinon le premier pas encore tiré
+  const current = selected !== null && remaining.includes(selected) ? selected : (remaining[0] ?? null)
+  const nextLot = current === null ? null : plannedLots[current]
+  const lastResult = results.at(-1)
   const won = new Set(results.map((r) => r.winner))
   const pool = onePerPerson ? entries.filter((e) => !won.has(e.name)) : entries
   const poolTotal = pool.reduce((s, e) => s + e.tickets, 0)
@@ -71,9 +79,9 @@ export default function Tombola() {
   }
 
   async function draw() {
-    if (!pool.length || rolling || nextLot === null) return
-    const lotLabel = nextLot ? `« ${nextLot} »` : 'le lot'
-    if (!(await ask(`Tirer ${lotLabel} (${results.length + 1}/${plannedLots.length}) entre ${pool.length} participant(s) pour ${poolTotal} ticket(s) ?`))) return
+    if (!pool.length || rolling || current === null || nextLot === null) return
+    const lotLabel = nextLot ? `le lot ${current + 1} « ${nextLot} »` : 'le lot'
+    if (!(await ask(`Tirer ${lotLabel} entre ${pool.length} participant(s) pour ${poolTotal} ticket(s) ?`))) return
     const win = drawWinner(pool)!
     setWinner(null)
     // petite animation : les noms défilent puis ralentissent sur le gagnant
@@ -86,7 +94,8 @@ export default function Tombola() {
     }
     setRolling(null)
     setWinner(win)
-    setLots({ results: [...results, { prize: nextLot, winner: win.name, winnerTickets: win.tickets }] })
+    setLots({ results: [...results, { lot: current, prize: nextLot, winner: win.name, winnerTickets: win.tickets }] })
+    setSelected(null)
     await safe(() => recordDraw({ winner: win.name, winnerTickets: win.tickets, totalTickets: poolTotal, participants: pool.length, prize: nextLot }))
   }
 
@@ -120,6 +129,7 @@ export default function Tombola() {
                   await safe(resetRaffle)
                   setLots({ lots: [], results: [] })
                   setWinner(null)
+                  setSelected(null)
                 }
               }}
             >
@@ -224,35 +234,55 @@ export default function Tombola() {
           </h2>
           {/* ——— Lots ——— */}
           <form onSubmit={addLot} className="mt-3 flex gap-2">
-            <input className="field" value={lotInput} onChange={(e) => setLotInput(e.target.value)} maxLength={120} placeholder="Ajouter un lot : Revolver Cattleman gravé…" disabled={results.length > 0} />
-            <Button type="submit" variant="ink" disabled={results.length > 0 || !lotInput.trim()} aria-label="Ajouter le lot">
+            <input className="field" value={lotInput} onChange={(e) => setLotInput(e.target.value)} maxLength={120} placeholder="Ajouter un lot : Revolver Cattleman gravé…" />
+            <Button type="submit" variant="ink" disabled={!lotInput.trim()} aria-label="Ajouter le lot">
               <Plus size={17} />
             </Button>
           </form>
           <p className="mt-1.5 text-[13.5px] text-sepia italic">
-            {results.length > 0 ? 'Tirage commencé : les lots ne se modifient plus.' : 'Un tirage par lot, dans l’ordre de la liste (garde le gros lot pour la fin).'}
+            Clique sur un lot pour choisir celui à tirer, dans l’ordre que tu veux.
           </p>
           {lots.length > 0 && (
             <ol className="mt-2 space-y-1">
               {lots.map((l, i) => {
-                const r = results[i]
+                const r = resultOf.get(i)
+                const isSel = !r && i === current
                 return (
-                  <li
-                    key={i}
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[15.5px] ${r ? 'border-brass/40 bg-brass/10' : i === results.length ? 'border-blood/60' : 'border-white/8'}`}
-                  >
-                    <Gift size={15} className={r ? 'text-brass' : 'text-sepia'} />
-                    <span className="font-type text-sepia">{i + 1}.</span>
-                    <span className="min-w-0 flex-1 truncate">{l}</span>
-                    {r ? (
-                      <b className="truncate font-semibold text-brass">{r.winner}</b>
-                    ) : (
-                      results.length === 0 && (
-                        <button className="cursor-pointer text-sepia-2 hover:text-blood" onClick={() => setLots({ lots: lots.filter((_, j) => j !== i) })} aria-label={`Retirer ${l}`}>
-                          <X size={14} />
-                        </button>
-                      )
-                    )}
+                  <li key={i}>
+                    <div
+                      role={r ? undefined : 'button'}
+                      tabIndex={r ? undefined : 0}
+                      onClick={() => !r && !rolling && setSelected(i)}
+                      onKeyDown={(e) => !r && (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), setSelected(i))}
+                      aria-pressed={r ? undefined : isSel}
+                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[15.5px] transition ${
+                        r ? 'border-brass/40 bg-brass/10' : isSel ? 'cursor-pointer border-blood bg-blood/15 shadow-[0_0_16px_-6px_rgba(208,27,37,.8)]' : 'cursor-pointer border-white/8 hover:border-white/25'
+                      }`}
+                    >
+                      <Gift size={15} className={r ? 'text-brass' : isSel ? 'text-blood' : 'text-sepia'} />
+                      <span className="font-type text-sepia">{i + 1}.</span>
+                      <span className="min-w-0 flex-1 truncate">{l}</span>
+                      {r ? (
+                        <b className="truncate font-semibold text-brass">{r.winner}</b>
+                      ) : (
+                        <>
+                          {isSel && <span className="label text-[12px] text-blood">À tirer</span>}
+                          {results.length === 0 && (
+                            <button
+                              className="cursor-pointer text-sepia-2 hover:text-blood"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setLots({ lots: lots.filter((_, j) => j !== i) })
+                                setSelected(null)
+                              }}
+                              aria-label={`Retirer ${l}`}
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </li>
                 )
               })}
@@ -271,7 +301,7 @@ export default function Tombola() {
                 </motion.p>
               ) : winner ? (
                 <motion.div key={`${winner.id}-${results.length}`} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}>
-                  <p className="label text-[15px] text-brass">{results.at(-1)?.prize ? `Gagnant · ${results.at(-1)!.prize}` : 'Le gagnant est'}</p>
+                  <p className="label text-[15px] text-brass">{lastResult?.prize ? `Gagnant du lot ${(lastResult.lot ?? results.length - 1) + 1} · ${lastResult.prize}` : 'Le gagnant est'}</p>
                   <p className="font-western text-5xl leading-none tracking-[.04em] [text-shadow:0_0_30px_rgba(214,165,77,.45)]">{winner.name.toUpperCase()}</p>
                   <p className="mt-1 text-[15px] text-sepia">avec {winner.tickets} ticket(s)</p>
                 </motion.div>
@@ -285,23 +315,24 @@ export default function Tombola() {
 
           <button
             onClick={draw}
-            disabled={!pool.length || !!rolling || nextLot === null}
+            disabled={!pool.length || !!rolling || current === null}
             className="mt-4 w-full cursor-pointer rounded-2xl border border-white/15 bg-gradient-to-b from-[#e6b65d] to-[#a8741f] py-3 font-western text-[26px] tracking-[.18em] text-[#1a120c] shadow-[0_14px_34px_-12px_rgba(214,165,77,.8)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-35"
           >
-            {nextLot === null ? 'TOUS LES LOTS SONT TIRÉS' : plannedLots.length > 1 ? `TIRER LE LOT ${results.length + 1} / ${plannedLots.length}` : 'TIRER AU SORT'}
+            {current === null ? 'TOUS LES LOTS SONT TIRÉS' : plannedLots.length > 1 ? `TIRER LE LOT ${current + 1}` : 'TIRER AU SORT'}
           </button>
-          {nextLot === null && (
+          {current === null && (
             <button
               className="mt-2 w-full cursor-pointer text-[14px] text-sepia underline-offset-2 hover:text-ink hover:underline"
               onClick={() => {
                 setLots({ results: [] })
                 setWinner(null)
+                setSelected(null)
               }}
             >
               Refaire les tirages avec les mêmes lots
             </button>
           )}
-          {nextLot !== null && entries.length > 0 && !pool.length && <p className="mt-2 text-center text-[14px] text-blood">Plus personne à tirer : tous les participants ont déjà gagné.</p>}
+          {current !== null && entries.length > 0 && !pool.length && <p className="mt-2 text-center text-[14px] text-blood">Plus personne à tirer : tous les participants ont déjà gagné.</p>}
         </section>
 
         {/* ——— Historique ——— */}
