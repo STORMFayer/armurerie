@@ -31,6 +31,15 @@ export function computeTotals(items: OrderItem[], discountPct: number, taxPct: n
 export const WEAPON_CATEGORIES = ['Revolvers', 'Pistolets', 'Carabines', 'Fusils', 'Fusils à pompe', 'Armes de jet & blanches']
 export const isWeapon = (category?: string) => !!category && WEAPON_CATEGORIES.includes(category)
 
+/** Nom comparable : sans accents, minuscules, espaces simplifiés (détection des doublons). */
+export const normName = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+
 export const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
 
 export const isToday = (ts: number) => new Date(ts).toDateString() === new Date().toDateString()

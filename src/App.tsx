@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator } from 'lucide-react'
+import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator, Megaphone } from 'lucide-react'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
@@ -15,6 +15,7 @@ import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
 import Partenaires from '@/pages/Partenaires'
 import Tombola from '@/pages/Tombola'
+import Crieur from '@/pages/Crieur'
 import Stock from '@/pages/Stock'
 import Compta from '@/pages/Compta'
 import { isCritical, subscribeStock, useStock } from '@/lib/stock'
@@ -39,6 +40,7 @@ const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }
   { id: 'compta', label: 'Compta', icon: <Calculator size={18} />, page: () => <Compta /> },
   { id: 'guide', label: 'Guide', icon: <BookOpen size={18} />, page: () => <Guide /> },
   { id: 'tombola', label: 'Tombola', icon: <Ticket size={18} />, page: () => <Tombola /> },
+  { id: 'crieur', label: 'Crieur', icon: <Megaphone size={18} />, page: () => <Crieur /> },
   { id: 'bilan', label: 'Bilan', icon: <LayoutDashboard size={18} />, page: () => <Dashboard /> },
 ]
 
@@ -135,7 +137,7 @@ export default function App() {
                 key={t.id}
                 value={t.id}
                 className={cn(
-                  'relative flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 font-sc text-[20px] tracking-[.12em] whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-white',
+                  'relative flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 font-sc text-[19px] tracking-[.1em] whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-white',
                   tab === t.id ? 'text-white' : 'text-parch/55 hover:text-parch',
                 )}
               >

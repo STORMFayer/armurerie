@@ -173,6 +173,12 @@ export const db = {
   async renameClientOrders(clientId: string, name: string) {
     if (supabase) fail((await supabase.from(T.orders).update({ client_name: name }).eq('client_id', clientId)).error)
   },
+  /** Fusion : toutes les ventes de `from` passent sur `to`, puis `from` est supprimé. */
+  async mergeClients(from: string, to: string, name: string) {
+    if (!supabase) return
+    if (fail((await supabase.from(T.orders).update({ client_id: to, client_name: name }).eq('client_id', from)).error)) return
+    fail((await supabase.from(T.clients).delete().eq('id', from)).error)
+  },
   async deleteClient(id: string) {
     if (supabase) fail((await supabase.from(T.clients).delete().eq('id', id)).error)
   },

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { BadgeCheck, BadgeX, Crosshair, Pencil, Search, ShoppingCart, Trash2, UserPlus, Users } from 'lucide-react'
+import { BadgeCheck, BadgeX, Crosshair, Merge, Pencil, Search, ShoppingCart, Trash2, UserPlus, Users } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Empty, Field, Modal, Panel, StatusStamp, useConfirm } from '@/components/ui'
@@ -7,10 +7,11 @@ import { useStore } from '@/lib/store'
 import { useUi } from '@/lib/ui'
 import type { Client } from '@/lib/types'
 import { ItemArt } from '@/components/ItemArt'
-import { cn, fmtDate, isWeapon, money, orderNo } from '@/lib/utils'
+import { cn, fmtDate, isWeapon, money, normName, orderNo } from '@/lib/utils'
 
 export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: Client) => void }) {
   const saveClient = useStore((s) => s.saveClient)
+  const clients = useStore((s) => s.clients)
   const [f, setF] = useState({
     name: client?.name ?? '',
     phone: client?.phone ?? '',
@@ -24,6 +25,8 @@ export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: C
     e.preventDefault()
     const name = f.name.trim()
     if (!name) return toast.error('Il faut au moins un nom.')
+    const twin = clients.find((c) => c.id !== client?.id && normName(c.name) === normName(name))
+    if (twin) return toast.error(`${twin.name} existe déjà dans le registre.`, { description: 'Choisissez-le dans la liste au lieu d’en créer un nouveau.' })
     const saved = saveClient({ ...f, name, phone: f.phone.trim(), license: f.license.trim(), notes: f.notes.trim(), id: client?.id })
     toast.success(client ? 'Fiche client mise à jour.' : `${name} inscrit au registre.`)
     onDone(saved)
@@ -33,6 +36,9 @@ export function ClientForm({ client, onDone }: { client?: Client; onDone: (c?: C
     <form onSubmit={submit} className="space-y-3">
       <Field label="Nom & prénom *">
         <input className="field" autoFocus value={f.name} onChange={(e) => set({ name: e.target.value })} placeholder="Arthur Morgan" maxLength={80} />
+        {f.name.trim() && clients.some((c) => c.id !== client?.id && normName(c.name) === normName(f.name)) && (
+          <span className="mt-1 block text-sm text-blood">Ce client existe déjà.</span>
+        )}
       </Field>
       <Field label="Téléphone / télégramme">
         <input className="field" value={f.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="555-0199" maxLength={30} />
@@ -83,7 +89,22 @@ export default function Clients() {
     return m
   }, [orders])
 
-const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
+// fiches portant le même nom (doublons à regrouper)
+  const dupGroups = useMemo(() => {
+    const m = new Map<string, Client[]>()
+    for (const c of clients) m.set(normName(c.name), [...(m.get(normName(c.name)) ?? []), c])
+    return [...m.values()].filter((g) => g.length > 1)
+  }, [clients])
+  const { mergeClients } = useStore()
+  async function mergeAll() {
+    if (!(await ask(`Regrouper ${dupGroups.length} client(s) en double ? Leurs ventes seront réunies sur une seule fiche.`))) return
+    for (const g of dupGroups) {
+      const sorted = [...g].sort((a, b) => a.createdAt - b.createdAt)
+      mergeClients(sorted[0].id, sorted.slice(1).map((c) => c.id))
+    }
+    toast.success('Doublons regroupés.')
+  }
+  const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().includes(q.toLowerCase()))
 
   async function remove(c: Client) {
     if (await ask(`Rayer ${c.name} du registre ? Ses commandes resteront dans l'historique.`)) {
@@ -111,6 +132,16 @@ const list = clients.filter((c) => [c.name, c.phone].join(' ').toLowerCase().inc
         </Button>
       }
     >
+      {dupGroups.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-brass/40 bg-brass/10 px-4 py-2.5">
+          <span className="flex-1">
+            <b className="font-semibold">Doublons :</b> {dupGroups.map((g) => `${g[0].name} (×${g.length})`).join(', ')}
+          </span>
+          <Button size="sm" variant="brass" onClick={mergeAll}>
+            <Merge size={14} /> Regrouper
+          </Button>
+        </div>
+      )}
       <div className="relative mb-4 max-w-md">
         <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={16} />
         <input className="field pl-9" placeholder="Nom, téléphone…" value={q} onChange={(e) => setQ(e.target.value)} />

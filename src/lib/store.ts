@@ -36,6 +36,8 @@ interface State {
   // clients
   saveClient: (c: Omit<Client, 'id' | 'createdAt'> & { id?: string }) => Client
   deleteClient: (id: string) => void
+  /** fusionne les fiches `fromIds` dans `toId` (ventes regroupées) */
+  mergeClients: (toId: string, fromIds: string[]) => void
 
   // caisse
   addToCart: (p: Product, qty?: number) => void
@@ -115,6 +117,25 @@ export const useStore = create<State>()(
           if (prev && prev.name !== client.name) db.renameClientOrders(client.id, client.name)
         })
         return client
+      },
+      mergeClients: (toId, fromIds) => {
+        const target = get().clients.find((c) => c.id === toId)
+        if (!target) return
+        const from = get().clients.filter((c) => fromIds.includes(c.id))
+        // on garde les infos manquantes des autres fiches (téléphone, notes)
+        const merged: Client = {
+          ...target,
+          phone: target.phone || from.find((c) => c.phone)?.phone || '',
+          notes: [target.notes, ...from.map((c) => c.notes)].filter(Boolean).join(' · ').slice(0, 500),
+        }
+        set((s) => ({
+          clients: s.clients.filter((c) => !fromIds.includes(c.id)).map((c) => (c.id === toId ? merged : c)),
+          orders: s.orders.map((o) => (o.clientId && fromIds.includes(o.clientId) ? { ...o, clientId: toId, clientName: merged.name } : o)),
+          cart: s.cart.clientId && fromIds.includes(s.cart.clientId) ? { ...s.cart, clientId: toId } : s.cart,
+        }))
+        db.upsertClient(merged).then(async () => {
+          for (const id of fromIds) await db.mergeClients(id, toId, merged.name)
+        })
       },
       deleteClient: (id) => {
         set((s) => ({
