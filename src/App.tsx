@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator, Megaphone } from 'lucide-react'
+import { BookOpen, Coins, Crosshair, Download, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator, Megaphone } from 'lucide-react'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
@@ -11,7 +11,6 @@ import Caisse from '@/pages/Caisse'
 import Catalogue from '@/pages/Catalogue'
 import Clients from '@/pages/Clients'
 import Commandes from '@/pages/Commandes'
-import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
 import Partenaires from '@/pages/Partenaires'
 import Tombola from '@/pages/Tombola'
@@ -42,7 +41,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }
   { id: 'guide', label: 'Guide', icon: <BookOpen size={18} />, page: () => <Guide /> },
   { id: 'tombola', label: 'Tombola', icon: <Ticket size={18} />, page: () => <Tombola /> },
   { id: 'crieur', label: 'Crieur', icon: <Megaphone size={18} />, page: () => <Crieur /> },
-  { id: 'bilan', label: 'Bilan', icon: <LayoutDashboard size={18} />, page: () => <Dashboard /> },
 ]
 
 export default function App() {

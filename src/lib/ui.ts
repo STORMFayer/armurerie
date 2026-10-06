@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 
-export type TabId = 'caisse' | 'partenaires' | 'commandes' | 'clients' | 'catalogue' | 'stock' | 'compta' | 'guide' | 'tombola' | 'crieur' | 'bilan'
+export type TabId = 'caisse' | 'partenaires' | 'commandes' | 'clients' | 'catalogue' | 'stock' | 'compta' | 'guide' | 'tombola' | 'crieur'
 
 /** État d'interface partagé (onglet actif) — non sauvegardé. */
-const TABS: TabId[] = ['caisse', 'partenaires', 'commandes', 'clients', 'catalogue', 'stock', 'compta', 'guide', 'tombola', 'crieur', 'bilan']
+const TABS: TabId[] = ['caisse', 'partenaires', 'commandes', 'clients', 'catalogue', 'stock', 'compta', 'guide', 'tombola', 'crieur']
 const fromHash = (): TabId => {
   const h = location.hash.slice(1) as TabId
   return TABS.includes(h) ? h : 'caisse'
