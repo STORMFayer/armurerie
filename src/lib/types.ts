@@ -19,6 +19,10 @@ export interface Product {
   price: number
   stock: number | null // null = illimité (services)
   image?: string // URL d'image optionnelle (sinon illustration auto)
+  /** frais admin / taxes de fabrication ($) */
+  craftTax?: number
+  /** matières nécessaires : { idMatière: quantité } */
+  recipe?: Record<string, number>
 }
 
 export interface Client {
@@ -36,6 +40,8 @@ export interface OrderItem {
   name: string
   price: number
   qty: number
+  /** coût de fabrication unitaire au moment de la vente (compta) */
+  cost?: number
 }
 
 export type OrderStatus = 'en_attente' | 'payee' | 'livree' | 'annulee'

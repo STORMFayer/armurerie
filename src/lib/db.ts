@@ -29,8 +29,19 @@ const toProduct = (r: any): Product => ({
   price: num(r.price),
   stock: r.stock,
   image: r.image ?? undefined,
+  craftTax: num(r.craft_tax),
+  recipe: (r.recipe ?? {}) as Record<string, number>,
 })
-const fromProduct = (p: Product) => ({ id: p.id, name: p.name, category: p.category, price: p.price, stock: p.stock, image: p.image ?? null })
+const fromProduct = (p: Product) => ({
+  id: p.id,
+  name: p.name,
+  category: p.category,
+  price: p.price,
+  stock: p.stock,
+  image: p.image ?? null,
+  craft_tax: p.craftTax ?? 0,
+  recipe: p.recipe ?? {},
+})
 
 const toClient = (r: any): Client => ({
   id: r.id,

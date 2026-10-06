@@ -10,7 +10,7 @@ const p = (id: string, name: string, category: Category, price: number, image = 
 })
 
 // Grille de prix officielle des armureries (réunion, applicable le 3 octobre 1899 au soir).
-export const SEED_PRODUCTS: Product[] = [
+const BASE: Product[] = [
   // Revolvers
   p('rev-cattleman', 'Revolver Cattleman', 'Revolvers', 74.5),
   p('rev-cattleman-mex', 'Cattleman mexicain', 'Revolvers', 69),
@@ -49,15 +49,15 @@ export const SEED_PRODUCTS: Product[] = [
   p('bl-hatchet', 'Hachette', 'Armes de jet & blanches', 17.5),
   p('bl-machete', 'Machette', 'Armes de jet & blanches', 57),
   p('bl-machete-coll', 'Machette de collection', 'Armes de jet & blanches', 114.5),
-  // Munitions (à l'unité) : armes à feu 0,35 (matières 0,20 + 75 %) · armes blanches 0,40
-  p('mun-rev', 'Munitions de revolver normales', 'Munitions', 0.35),
-  p('mun-pis', 'Munitions de pistolet normales', 'Munitions', 0.35),
-  p('mun-car', 'Munitions de répétition normales', 'Munitions', 0.35),
-  p('mun-varmint', 'Munitions de Varmint normales', 'Munitions', 0.35),
-  p('mun-varmint-tranq', 'Munitions tranquillisantes de Varmint', 'Munitions', 0.35),
-  p('mun-fus', 'Munitions de fusil normales', 'Munitions', 0.35),
-  p('mun-elephant', 'Munitions de fusil à éléphant', 'Munitions', 0.35),
-  p('mun-pom', 'Munitions de fusil à pompe normales', 'Munitions', 0.35),
+  // Munitions (à l'unité) : armes à feu 0,30 · armes blanches 0,40
+  p('mun-rev', 'Munitions de revolver normales', 'Munitions', 0.3),
+  p('mun-pis', 'Munitions de pistolet normales', 'Munitions', 0.3),
+  p('mun-car', 'Munitions de répétition normales', 'Munitions', 0.3),
+  p('mun-varmint', 'Munitions de Varmint normales', 'Munitions', 0.3),
+  p('mun-varmint-tranq', 'Munitions tranquillisantes de Varmint', 'Munitions', 0.3),
+  p('mun-fus', 'Munitions de fusil normales', 'Munitions', 0.3),
+  p('mun-elephant', 'Munitions de fusil à éléphant', 'Munitions', 0.3),
+  p('mun-pom', 'Munitions de fusil à pompe normales', 'Munitions', 0.3),
   p('mun-knife', 'Munitions de couteaux de lancer', 'Munitions', 0.4),
   p('mun-hatchet', 'Munitions de hachette', 'Munitions', 0.4),
   // Accessoires (hors grille, prix inchangés)
@@ -79,6 +79,34 @@ export const SEED_PRODUCTS: Product[] = [
   p('cus-meca-4', 'Amélioration mécanique — arme 200 à 300 $', 'Personnalisation', 15, false),
   p('cus-meca-5', 'Amélioration mécanique — arme 300 $ et plus', 'Personnalisation', 20, false),
 ]
+
+// Fiches de fabrication en jeu : frais admin / taxes + matières (voir onglet Stock)
+const W = (tax: number, cuir: number, bois: number, fer: number) => ({ craftTax: tax, recipe: { ...(cuir ? { cuir } : {}), planches: bois, fer } })
+const AMMO = { craftTax: 0, recipe: { plomb: 1, soufre: 1 } }
+const SHEETS: Record<string, Pick<Product, 'craftTax' | 'recipe'>> = {
+  'car-repeat': W(56.98, 1, 10, 10),
+  'bl-knife': W(1.4, 0, 2, 2),
+  'bl-rustic': W(1.9, 0, 2, 2),
+  'bl-throwing': W(8.8, 0, 4, 4),
+  'bl-hatchet': W(11.8, 0, 4, 4),
+  'pom-sawed': W(253.98, 1, 20, 20),
+  'pom-double': W(338.98, 1, 20, 20),
+  'pom-elephant': W(293.98, 1, 20, 20),
+  'pom-pump': W(288.98, 1, 20, 20),
+  'pom-repeating': W(228.98, 1, 20, 20),
+  'pom-semi': W(258.98, 1, 20, 20),
+  'fus-bolt': W(160.48, 1, 15, 15),
+  'fus-carcano': W(494.98, 1, 50, 50),
+  'fus-rolling': W(460, 1, 50, 50),
+  'fus-springfield': W(185.48, 1, 15, 15),
+  'fus-varmint': W(53.48, 1, 5, 5),
+  'acc-oil': { craftTax: 0, recipe: { graisse: 1 } },
+  'acc-binoculars': { craftTax: 0, recipe: { fer: 2 } },
+  'acc-lasso': { craftTax: 0, recipe: { coton: 2 } },
+  ...Object.fromEntries(['mun-rev', 'mun-pis', 'mun-car', 'mun-varmint', 'mun-varmint-tranq', 'mun-fus', 'mun-elephant', 'mun-pom'].map((id) => [id, AMMO])),
+}
+
+export const SEED_PRODUCTS: Product[] = BASE.map((p) => ({ ...p, ...SHEETS[p.id] }))
 
 /** Tranche d'amélioration mécanique correspondant au prix d'une arme. */
 export function mecaTrancheFor(price: number) {

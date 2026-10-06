@@ -2,6 +2,7 @@ import { Crosshair, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, Panel, useConfirm } from '@/components/ui'
+import { unitCost, useStock } from '@/lib/stock'
 import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, type Product } from '@/lib/types'
 import { money, toNum } from '@/lib/utils'
@@ -12,12 +13,16 @@ function ProductForm({ product, onDone }: { product?: Product; onDone: () => voi
   const [category, setCategory] = useState<Category>(product?.category ?? 'Revolvers')
   const [price, setPrice] = useState(product ? String(product.price) : '')
   const [image, setImage] = useState(product?.image ?? '')
+  const materials = useStock((s) => s.materials)
+  const [tax, setTax] = useState(String(product?.craftTax ?? 0))
+  const [recipe, setRecipe] = useState<Record<string, string>>(() => Object.fromEntries(Object.entries(product?.recipe ?? {}).map(([k, v]) => [k, String(v)])))
+  const cleanRecipe = () => Object.fromEntries(Object.entries(recipe).map(([k, v]) => [k, toNum(v)]).filter(([, v]) => (v as number) > 0)) as Record<string, number>
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return toast.error('Donnez un nom à l’article.')
     if (toNum(price) <= 0) return toast.error('Le prix doit être supérieur à zéro.')
-    saveProduct({ id: product?.id, name: name.trim(), category, price: toNum(price), stock: null, image: /^(https?:\/\/|img\/)/.test(image.trim()) ? image.trim() : undefined })
+    saveProduct({ id: product?.id, name: name.trim(), category, price: toNum(price), stock: null, image: /^(https?:\/\/|img\/)/.test(image.trim()) ? image.trim() : undefined, craftTax: toNum(tax), recipe: cleanRecipe() })
     toast.success(product ? 'Article modifié.' : 'Article ajouté au catalogue.')
     onDone()
   }
@@ -39,6 +44,33 @@ function ProductForm({ product, onDone }: { product?: Product; onDone: () => voi
           <input className="field" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" />
         </Field>
       </div>
+      <p className="ornament pt-2 text-[16px]">Fiche de fabrication</p>
+      <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
+        <Field label="Frais admin / taxes ($)">
+          <input className="field" inputMode="decimal" value={tax} onChange={(e) => setTax(e.target.value)} />
+        </Field>
+        <div>
+          <span className="mb-1.5 block font-sc text-[15px] tracking-[.14em] text-sepia">Matières requises</span>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {materials.map((m) => (
+              <label key={m.id} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-2 py-1">
+                <span className="min-w-0 flex-1 truncate text-[14.5px]">{m.name}</span>
+                <input
+                  className="w-14 bg-transparent text-right font-type text-[17px] outline-none"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={recipe[m.id] ?? ''}
+                  onChange={(e) => setRecipe((r) => ({ ...r, [m.id]: e.target.value }))}
+                />
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+      <p className="text-[14.5px] text-sepia">
+        Coût de fabrication : <b className="font-type text-[17px] text-ink">{money(unitCost({ ...(product ?? ({} as Product)), craftTax: toNum(tax), recipe: cleanRecipe() } as Product, materials))}</b>
+        {toNum(price) > 0 && <> · marge {money(toNum(price) - unitCost({ craftTax: toNum(tax), recipe: cleanRecipe() } as Product, materials))}</>}
+      </p>
       <Field label="Image (URL, optionnel)" hint="Lien direct vers une image (ex. Discord / Imgur). Vide = illustration automatique.">
         <input className="field" value={image} onChange={(e) => setImage(e.target.value)} placeholder="https://…" maxLength={500} />
       </Field>

@@ -4,6 +4,7 @@ import { db, fetchAll, hasDb } from './db'
 import { SEED_PRODUCTS } from './seed'
 import type { Client, Order, OrderItem, OrderStatus, Product, Settings } from './types'
 import { cartTotals, useExtras } from './extras'
+import { moveStockFor, unitCost, useStock } from './stock'
 import { round2, uid } from './utils'
 
 export interface Cart {
@@ -156,7 +157,8 @@ export const useStore = create<State>()(
           number: nextOrderNumber,
           clientId: client?.id ?? null,
           clientName: client?.name ?? 'Client de passage',
-          items: cart.items,
+          // coût de fabrication figé au moment de la vente (compta)
+          items: cart.items.map((i) => ({ ...i, cost: unitCost(products.find((p) => p.id === i.productId), useStock.getState().materials) })),
           discountPct: cart.discountPct,
           taxPct: settings.taxPct,
           ...totals,
@@ -176,6 +178,7 @@ export const useStore = create<State>()(
           if (!saved) return null
           order = saved
         }
+        moveStockFor(order.items, products, -1)
         set((s) => ({
           orders: [order, ...s.orders.filter((o) => o.id !== order.id)],
           nextOrderNumber: Math.max(s.nextOrderNumber, order.number + 1),
@@ -191,12 +194,16 @@ export const useStore = create<State>()(
         const updated: Order = { ...order, status, ...(becomesPaid && !order.received ? { received: order.total } : {}) }
         set((s) => ({ orders: s.orders.map((o) => (o.id === id ? updated : o)) }))
         db.updateOrder(id, { status, received: updated.received })
+        // annulation = matières restituées ; dé-annulation = re-consommées
+        if (status === 'annulee') moveStockFor(order.items, get().products, 1)
+        else if (order.status === 'annulee') moveStockFor(order.items, get().products, -1)
       },
       deleteOrder: (id) => {
         const order = get().orders.find((o) => o.id === id)
         if (!order) return
         set((s) => ({ orders: s.orders.filter((o) => o.id !== id) }))
         db.deleteOrder(id)
+        if (order.status !== 'annulee') moveStockFor(order.items, get().products, 1)
       },
 
       saveSettings: (patch) => {

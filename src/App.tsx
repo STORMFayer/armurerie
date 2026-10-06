@@ -1,7 +1,7 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket } from 'lucide-react'
-import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
+import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator } from 'lucide-react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
 import { hasDb, subscribe } from '@/lib/db'
@@ -15,6 +15,9 @@ import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
 import Partenaires from '@/pages/Partenaires'
 import Tombola from '@/pages/Tombola'
+import Stock from '@/pages/Stock'
+import Compta from '@/pages/Compta'
+import { isCritical, subscribeStock, useStock } from '@/lib/stock'
 import { subscribeExtras, useExtras } from '@/lib/extras'
 import { useUi, type TabId } from '@/lib/ui'
 import { FxBoundary } from '@/components/fx/FxBoundary'
@@ -32,6 +35,8 @@ const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }
   { id: 'commandes', label: 'Commandes', icon: <ScrollText size={18} />, page: () => <Commandes /> },
   { id: 'clients', label: 'Clients', icon: <Users size={18} />, page: () => <Clients /> },
   { id: 'catalogue', label: 'Catalogue', icon: <Crosshair size={18} />, page: () => <Catalogue /> },
+  { id: 'stock', label: 'Stock', icon: <Boxes size={18} />, page: () => <Stock /> },
+  { id: 'compta', label: 'Compta', icon: <Calculator size={18} />, page: () => <Compta /> },
   { id: 'guide', label: 'Guide', icon: <BookOpen size={18} />, page: () => <Guide /> },
   { id: 'tombola', label: 'Tombola', icon: <Ticket size={18} />, page: () => <Tombola /> },
   { id: 'bilan', label: 'Bilan', icon: <LayoutDashboard size={18} />, page: () => <Dashboard /> },
@@ -57,13 +62,19 @@ export default function App() {
     loadExtras()
     const off = subscribe(load)
     const offExtras = subscribeExtras(loadExtras)
+    const loadStock = useStock.getState().load
+    loadStock()
+    const offStock = subscribeStock(loadStock)
     return () => {
       off()
       offExtras()
+      offStock()
     }
   }, [])
 
   const fullFx = useFullFx()
+  const materials = useStock((st) => st.materials)
+  const critical = useMemo(() => materials.filter(isCritical), [materials])
   const active = useWindowActive()
   useFxClass()
 
@@ -124,7 +135,7 @@ export default function App() {
                 key={t.id}
                 value={t.id}
                 className={cn(
-                  'relative flex cursor-pointer items-center gap-2 rounded-xl px-5 py-2 font-sc text-[23px] tracking-[.14em] whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-white',
+                  'relative flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 font-sc text-[20px] tracking-[.12em] whitespace-nowrap uppercase transition-colors outline-none focus-visible:text-white',
                   tab === t.id ? 'text-white' : 'text-parch/55 hover:text-parch',
                 )}
               >
@@ -134,6 +145,7 @@ export default function App() {
                   {t.label}
                   {t.id === 'caisse' && cartCount > 0 && <Badge>{cartCount}</Badge>}
                   {t.id === 'commandes' && pending > 0 && <Badge>{pending}</Badge>}
+                  {t.id === 'stock' && critical.length > 0 && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-blood px-1.5 font-type text-[13px] tracking-normal text-white">{critical.length}</span>}
                 </span>
               </Tabs.Trigger>
             ))}
@@ -143,6 +155,19 @@ export default function App() {
           </button>
         </LiquidGlass>
       </nav>
+
+      {critical.length > 0 && tab !== 'stock' && (
+        <button
+          onClick={() => setTab('stock')}
+          className="mb-4 flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-blood/40 bg-blood/10 px-4 py-2.5 text-left transition hover:bg-blood/20"
+        >
+          <AlertTriangle className="shrink-0 text-blood" size={20} />
+          <span className="flex-1">
+            <b className="font-semibold">Stock critique :</b> {critical.map((m) => `${m.name} (${m.stock})`).join(', ')} — pensez à commander.
+          </span>
+          <span className="label text-[14px] text-sepia">Voir le stock →</span>
+        </button>
+      )}
 
       {!ready ? (
         <div className="grid flex-1 place-items-center py-24 text-center">
