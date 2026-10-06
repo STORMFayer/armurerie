@@ -1,24 +1,52 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { History, Minus, Plus, RotateCcw, Ticket, Trash2, Trophy } from 'lucide-react'
+import { Gift, History, Minus, Plus, RotateCcw, Ticket, Trash2, Trophy, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { Button, Empty, Field, Panel, useConfirm } from '@/components/ui'
 import { drawWinner, useExtras, type RaffleEntry } from '@/lib/extras'
 import { prefersReducedMotion } from '@/lib/motion'
-import { fmtDate } from '@/lib/utils'
+import { fmtDate, money } from '@/lib/utils'
 import { ExtrasUnavailable } from '@/pages/Partenaires'
+
+/* Lots de la tombola en cours et gagnants déjà tirés (gardés sur ce PC : le tirage se fait sur une seule caisse). */
+interface LotResult {
+  prize: string
+  winner: string
+  winnerTickets: number
+}
+interface LotsState {
+  lots: string[]
+  results: LotResult[]
+  onePerPerson: boolean
+  ticketPrice: number
+}
+const useLots = create<LotsState & { set: (p: Partial<LotsState>) => void }>()(
+  persist((set) => ({ lots: [], results: [], onePerPerson: true, ticketPrice: 0, set: (p) => set(p) }), {
+    name: 'armurerie-tombola-lots',
+    partialize: ({ lots, results, onePerPerson, ticketPrice }) => ({ lots, results, onePerPerson, ticketPrice }),
+  }),
+)
 
 export default function Tombola() {
   const { available, entries, draws, addTickets, setTickets, deleteEntry, recordDraw, resetRaffle } = useExtras()
   const [name, setName] = useState('')
   const [tickets, setTicketsInput] = useState('1')
-  const [prize, setPrize] = useState('')
+  const [lotInput, setLotInput] = useState('')
+  const { lots, results, onePerPerson, ticketPrice, set: setLots } = useLots()
   const [rolling, setRolling] = useState<string | null>(null)
   const [winner, setWinner] = useState<RaffleEntry | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
   const { ask, dialog } = useConfirm()
 
   const total = entries.reduce((s, e) => s + e.tickets, 0)
+  // sans lot saisi : un seul tirage « libre », comme avant
+  const plannedLots = lots.length ? lots : ['']
+  const nextLot = results.length < plannedLots.length ? plannedLots[results.length] : null
+  const won = new Set(results.map((r) => r.winner))
+  const pool = onePerPerson ? entries.filter((e) => !won.has(e.name)) : entries
+  const poolTotal = pool.reduce((s, e) => s + e.tickets, 0)
   const sorted = [...entries].sort((a, b) => b.tickets - a.tickets || a.name.localeCompare(b.name, 'fr'))
   const safe = async (f: () => Promise<unknown>) => {
     try {
@@ -43,13 +71,14 @@ export default function Tombola() {
   }
 
   async function draw() {
-    if (!entries.length || rolling) return
-    if (!(await ask(`Lancer le tirage au sort entre ${entries.length} participant(s) pour ${total} ticket(s) ?`))) return
-    const win = drawWinner(entries)!
+    if (!pool.length || rolling || nextLot === null) return
+    const lotLabel = nextLot ? `« ${nextLot} »` : 'le lot'
+    if (!(await ask(`Tirer ${lotLabel} (${results.length + 1}/${plannedLots.length}) entre ${pool.length} participant(s) pour ${poolTotal} ticket(s) ?`))) return
+    const win = drawWinner(pool)!
     setWinner(null)
     // petite animation : les noms défilent puis ralentissent sur le gagnant
     if (!prefersReducedMotion()) {
-      const names = entries.map((e) => e.name)
+      const names = pool.map((e) => e.name)
       for (let i = 0; i < 26; i++) {
         setRolling(names[Math.floor(Math.random() * names.length)])
         await new Promise((r) => setTimeout(r, 40 + i * i * 0.9))
@@ -57,7 +86,16 @@ export default function Tombola() {
     }
     setRolling(null)
     setWinner(win)
-    await safe(() => recordDraw({ winner: win.name, winnerTickets: win.tickets, totalTickets: total, participants: entries.length, prize: prize.trim() }))
+    setLots({ results: [...results, { prize: nextLot, winner: win.name, winnerTickets: win.tickets }] })
+    await safe(() => recordDraw({ winner: win.name, winnerTickets: win.tickets, totalTickets: poolTotal, participants: pool.length, prize: nextLot }))
+  }
+
+  function addLot(e: React.FormEvent) {
+    e.preventDefault()
+    const l = lotInput.trim()
+    if (!l) return
+    setLots({ lots: [...lots, l] })
+    setLotInput('')
   }
 
   if (available === false)
@@ -73,12 +111,16 @@ export default function Tombola() {
         title="Tombola"
         icon={<Ticket />}
         actions={
-          entries.length > 0 && (
+          (entries.length > 0 || lots.length > 0) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={async () => {
-                if (await ask('Nouvelle tombola : vider la liste des participants ? (l’historique des tirages est conservé)')) await safe(resetRaffle)
+                if (await ask('Nouvelle tombola : vider la liste des participants et des lots ? (l’historique des tirages est conservé)')) {
+                  await safe(resetRaffle)
+                  setLots({ lots: [], results: [] })
+                  setWinner(null)
+                }
               }}
             >
               <RotateCcw size={14} /> Nouvelle tombola
@@ -104,11 +146,34 @@ export default function Tombola() {
         </form>
         <p className="mt-2 text-[14.5px] text-sepia italic">Si le participant est déjà inscrit, ses nouveaux tickets s’ajoutent aux précédents.</p>
 
-        <div className="mt-5 flex items-baseline justify-between border-b border-white/8 pb-2">
-          <p className="label text-[16px] text-sepia">{entries.length} participant(s)</p>
-          <p className="font-type text-3xl tracking-[.02em]">
-            {total} <span className="text-[18px] text-sepia">ticket(s)</span>
-          </p>
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-b border-white/8 pb-2">
+          <label className="flex items-center gap-2">
+            <span className="label text-[15px] text-sepia">Prix du billet</span>
+            <span className="relative">
+              <span className="absolute top-1/2 left-2.5 -translate-y-1/2 text-sepia">$</span>
+              <input
+                className="field w-24 py-1 pl-6"
+                inputMode="decimal"
+                defaultValue={ticketPrice || ''}
+                placeholder="0"
+                onChange={(e) => {
+                  const v = Number(e.target.value.replace(',', '.'))
+                  setLots({ ticketPrice: Number.isFinite(v) && v > 0 ? v : 0 })
+                }}
+              />
+            </span>
+          </label>
+          <div className="text-right">
+            <p className="font-type text-3xl leading-none tracking-[.02em]">
+              {total} <span className="text-[18px] text-sepia">ticket(s) · {entries.length} participant(s)</span>
+            </p>
+            {ticketPrice > 0 && (
+              <p className="mt-1 text-[16px]">
+                <span className="text-sepia">Recette : </span>
+                <b className="font-type text-2xl text-brass">{money(total * ticketPrice)}</b>
+              </p>
+            )}
+          </div>
         </div>
 
         {sorted.length === 0 ? (
@@ -157,9 +222,46 @@ export default function Tombola() {
           <h2 className="flex items-center gap-2.5 font-western text-[28px] tracking-[.08em]">
             <Trophy className="text-brass" /> TIRAGE AU SORT
           </h2>
-          <Field label="Lot (facultatif)" className="mt-3">
-            <input className="field" value={prize} onChange={(e) => setPrize(e.target.value)} maxLength={120} placeholder="Revolver Cattleman gravé…" />
-          </Field>
+          {/* ——— Lots ——— */}
+          <form onSubmit={addLot} className="mt-3 flex gap-2">
+            <input className="field" value={lotInput} onChange={(e) => setLotInput(e.target.value)} maxLength={120} placeholder="Ajouter un lot : Revolver Cattleman gravé…" disabled={results.length > 0} />
+            <Button type="submit" variant="ink" disabled={results.length > 0 || !lotInput.trim()} aria-label="Ajouter le lot">
+              <Plus size={17} />
+            </Button>
+          </form>
+          <p className="mt-1.5 text-[13.5px] text-sepia italic">
+            {results.length > 0 ? 'Tirage commencé : les lots ne se modifient plus.' : 'Un tirage par lot, dans l’ordre de la liste (garde le gros lot pour la fin).'}
+          </p>
+          {lots.length > 0 && (
+            <ol className="mt-2 space-y-1">
+              {lots.map((l, i) => {
+                const r = results[i]
+                return (
+                  <li
+                    key={i}
+                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[15.5px] ${r ? 'border-brass/40 bg-brass/10' : i === results.length ? 'border-blood/60' : 'border-white/8'}`}
+                  >
+                    <Gift size={15} className={r ? 'text-brass' : 'text-sepia'} />
+                    <span className="font-type text-sepia">{i + 1}.</span>
+                    <span className="min-w-0 flex-1 truncate">{l}</span>
+                    {r ? (
+                      <b className="truncate font-semibold text-brass">{r.winner}</b>
+                    ) : (
+                      results.length === 0 && (
+                        <button className="cursor-pointer text-sepia-2 hover:text-blood" onClick={() => setLots({ lots: lots.filter((_, j) => j !== i) })} aria-label={`Retirer ${l}`}>
+                          <X size={14} />
+                        </button>
+                      )
+                    )}
+                  </li>
+                )
+              })}
+            </ol>
+          )}
+          <label className="mt-2 flex cursor-pointer items-center gap-2 text-[14.5px] text-sepia">
+            <input type="checkbox" className="accent-[#d01b25]" checked={onePerPerson} onChange={(e) => setLots({ onePerPerson: e.target.checked })} />
+            Un seul lot par personne
+          </label>
 
           <div className="mt-4 grid min-h-32 place-items-center rounded-2xl border border-white/10 bg-black/30 p-4 text-center">
             <AnimatePresence mode="wait">
@@ -168,13 +270,10 @@ export default function Tombola() {
                   {rolling.toUpperCase()}
                 </motion.p>
               ) : winner ? (
-                <motion.div key={winner.id} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}>
-                  <p className="label text-[15px] text-brass">Le gagnant est</p>
+                <motion.div key={`${winner.id}-${results.length}`} initial={{ scale: 0.7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}>
+                  <p className="label text-[15px] text-brass">{results.at(-1)?.prize ? `Gagnant · ${results.at(-1)!.prize}` : 'Le gagnant est'}</p>
                   <p className="font-western text-5xl leading-none tracking-[.04em] [text-shadow:0_0_30px_rgba(214,165,77,.45)]">{winner.name.toUpperCase()}</p>
-                  <p className="mt-1 text-[15px] text-sepia">
-                    avec {winner.tickets} ticket(s) sur {total}
-                    {prize.trim() && ` · ${prize.trim()}`}
-                  </p>
+                  <p className="mt-1 text-[15px] text-sepia">avec {winner.tickets} ticket(s)</p>
                 </motion.div>
               ) : (
                 <motion.p key="idle" className="text-sepia italic">
@@ -186,11 +285,23 @@ export default function Tombola() {
 
           <button
             onClick={draw}
-            disabled={!entries.length || !!rolling}
+            disabled={!pool.length || !!rolling || nextLot === null}
             className="mt-4 w-full cursor-pointer rounded-2xl border border-white/15 bg-gradient-to-b from-[#e6b65d] to-[#a8741f] py-3 font-western text-[26px] tracking-[.18em] text-[#1a120c] shadow-[0_14px_34px_-12px_rgba(214,165,77,.8)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-35"
           >
-            TIRER AU SORT
+            {nextLot === null ? 'TOUS LES LOTS SONT TIRÉS' : plannedLots.length > 1 ? `TIRER LE LOT ${results.length + 1} / ${plannedLots.length}` : 'TIRER AU SORT'}
           </button>
+          {nextLot === null && (
+            <button
+              className="mt-2 w-full cursor-pointer text-[14px] text-sepia underline-offset-2 hover:text-ink hover:underline"
+              onClick={() => {
+                setLots({ results: [] })
+                setWinner(null)
+              }}
+            >
+              Refaire les tirages avec les mêmes lots
+            </button>
+          )}
+          {nextLot !== null && entries.length > 0 && !pool.length && <p className="mt-2 text-center text-[14px] text-blood">Plus personne à tirer : tous les participants ont déjà gagné.</p>}
         </section>
 
         {/* ——— Historique ——— */}
