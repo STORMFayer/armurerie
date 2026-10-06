@@ -11,7 +11,8 @@ import { WeaponSheetCard } from '@/components/WeaponSheetCard'
 import { sheetFor, type WeaponSheet } from '@/lib/guide'
 import { useStore } from '@/lib/store'
 import { CATEGORIES, type Category, type Order, type Product } from '@/lib/types'
-import { cn, computeTotals, money, toNum } from '@/lib/utils'
+import { cartTotals, useExtras } from '@/lib/extras'
+import { cn, money, toNum } from '@/lib/utils'
 import { ClientForm } from '@/pages/Clients'
 
 type View = Category | 'Tout'
@@ -38,7 +39,8 @@ export default function Caisse() {
     [products, view, q],
   )
   const selected = products.find((p) => p.id === selectedId) ?? null
-  const totals = computeTotals(cart.items, cart.discountPct, settings.taxPct)
+  const partners = useExtras((s) => s.partners)
+  const totals = cartTotals(cart, products, settings, partners)
   const receivedNum = toNum(received)
   const client = clients.find((c) => c.id === cart.clientId)
 

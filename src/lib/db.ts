@@ -68,6 +68,8 @@ const toOrder = (r: any): Order => ({
   status: r.status as OrderStatus,
   note: r.note,
   createdAt: Date.parse(r.created_at),
+  partnerName: r.partner_name ?? null,
+  partnerDiscount: num(r.partner_discount),
 })
 const fromOrder = (o: Omit<Order, 'number'> & { number?: number }) => ({
   id: o.id,
@@ -86,6 +88,8 @@ const fromOrder = (o: Omit<Order, 'number'> & { number?: number }) => ({
   status: o.status,
   note: o.note,
   created_at: new Date(o.createdAt).toISOString(),
+  // colonnes ajoutées avec les partenaires : envoyées seulement si utilisées
+  ...(o.partnerName ? { partner_name: o.partnerName, partner_discount: o.partnerDiscount ?? 0 } : {}),
 })
 
 const SEED_ORDER = new Map(SEED_PRODUCTS.map((p, i) => [p.id, i]))

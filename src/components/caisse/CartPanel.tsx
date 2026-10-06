@@ -8,7 +8,8 @@ import { useFullFx, useWindowActive } from '@/lib/perf'
 import { StaticEmblem } from '@/components/fx/StaticEmblem'
 import { useStore } from '@/lib/store'
 import type { Product } from '@/lib/types'
-import { clamp, cn, computeTotals, money, orderNo, round2, toNum } from '@/lib/utils'
+import { cartTotals, useExtras } from '@/lib/extras'
+import { clamp, cn, money, orderNo, round2, toNum } from '@/lib/utils'
 
 const RevolverCylinder3D = lazy(() => import('@/components/fx/RevolverCylinder3D'))
 
@@ -38,7 +39,9 @@ export function CartPanel({
 }) {
   const { clients, cart, settings, nextOrderNumber, setQty, removeFromCart, setCart, clearCart } = useStore()
   const [extra, setExtra] = useState(false)
-  const totals = computeTotals(cart.items, cart.discountPct, settings.taxPct)
+  const { partners } = useExtras()
+  const products = useStore((s) => s.products)
+  const totals = cartTotals(cart, products, settings, partners)
   const receivedNum = toNum(received)
   const change = round2(receivedNum - totals.total)
   const client = clients.find((c) => c.id === cart.clientId)
@@ -69,6 +72,21 @@ export function CartPanel({
         </Button>
       </div>
       {client && !client.licenseValid && <p className="mt-1.5 text-sm text-blood">Pas de permis de port d'arme valide.</p>}
+      {partners.length > 0 && (
+        <select
+          className={cn('field mt-2', cart.partnerId && 'border-brass/60 text-brass')}
+          value={cart.partnerId ?? ''}
+          onChange={(e) => setCart({ partnerId: e.target.value || null })}
+          aria-label="Partenaire"
+        >
+          <option value="">Aucun partenaire</option>
+          {partners.map((p) => (
+            <option key={p.id} value={p.id}>
+              Partenaire : {p.name} (−{p.customPct} % custom, −{p.weaponsPct} % armes)
+            </option>
+          ))}
+        </select>
+      )}
 
       {empty ? (
         <Empty
@@ -171,7 +189,8 @@ export function CartPanel({
       {/* Total */}
       <div className="mt-4 space-y-0.5 text-[15px] text-sepia">
         {(totals.discount > 0 || totals.tax > 0) && <Row label="Sous-total" value={money(totals.subtotal)} />}
-        {totals.discount > 0 && <Row label={`Remise ${cart.discountPct}%`} value={`− ${money(totals.discount)}`} />}
+        {totals.partner && totals.partnerDiscount > 0 && <Row label={`Partenaire ${totals.partner.name}`} value={`− ${money(totals.partnerDiscount)}`} />}
+        {totals.discount - totals.partnerDiscount > 0.004 && <Row label={`Remise ${cart.discountPct}%`} value={`− ${money(totals.discount - totals.partnerDiscount)}`} />}
         {totals.tax > 0 && <Row label={`Taxe ${settings.taxPct}%`} value={`+ ${money(totals.tax)}`} />}
       </div>
       <div className="mt-1 flex items-end justify-between">

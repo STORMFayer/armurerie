@@ -57,6 +57,9 @@ export interface Order {
   status: OrderStatus
   note: string
   createdAt: number
+  /** partenaire appliqué à la vente et montant de sa remise (inclus dans discount) */
+  partnerName?: string | null
+  partnerDiscount?: number
 }
 
 export interface Settings {

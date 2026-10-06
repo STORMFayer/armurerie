@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users } from 'lucide-react'
+import { BookOpen, Coins, Crosshair, Download, LayoutDashboard, ScrollText, Settings2, Upload, Users, Handshake, Ticket } from 'lucide-react'
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
@@ -13,6 +13,9 @@ import Clients from '@/pages/Clients'
 import Commandes from '@/pages/Commandes'
 import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
+import Partenaires from '@/pages/Partenaires'
+import Tombola from '@/pages/Tombola'
+import { subscribeExtras, useExtras } from '@/lib/extras'
 import { useUi, type TabId } from '@/lib/ui'
 import { FxBoundary } from '@/components/fx/FxBoundary'
 import { LiquidGlass } from '@/components/fx/LiquidGlass'
@@ -25,10 +28,12 @@ const LiquidEmblem = lazy(() => import('@/components/fx/LiquidEmblem'))
 
 const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }[] = [
   { id: 'caisse', label: 'Caisse', icon: <Coins size={18} />, page: () => <Caisse /> },
+  { id: 'partenaires', label: 'Partenaires', icon: <Handshake size={18} />, page: () => <Partenaires /> },
   { id: 'commandes', label: 'Commandes', icon: <ScrollText size={18} />, page: () => <Commandes /> },
   { id: 'clients', label: 'Clients', icon: <Users size={18} />, page: () => <Clients /> },
   { id: 'catalogue', label: 'Catalogue', icon: <Crosshair size={18} />, page: () => <Catalogue /> },
   { id: 'guide', label: 'Guide', icon: <BookOpen size={18} />, page: () => <Guide /> },
+  { id: 'tombola', label: 'Tombola', icon: <Ticket size={18} />, page: () => <Tombola /> },
   { id: 'bilan', label: 'Bilan', icon: <LayoutDashboard size={18} />, page: () => <Dashboard /> },
 ]
 
@@ -48,7 +53,14 @@ export default function App() {
     if (!hasDb) return
     const { load } = useStore.getState()
     load()
-    return subscribe(load)
+    const loadExtras = useExtras.getState().load
+    loadExtras()
+    const off = subscribe(load)
+    const offExtras = subscribeExtras(loadExtras)
+    return () => {
+      off()
+      offExtras()
+    }
   }, [])
 
   const fullFx = useFullFx()

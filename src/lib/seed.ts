@@ -34,7 +34,7 @@ export const SEED_PRODUCTS: Product[] = [
   p('fus-springfield', 'Springfield', 'Fusils', 218),
   p('fus-carcano', 'Carcano', 'Fusils', 558.5),
   p('fus-rolling', 'Rolling Block', 'Fusils', 520),
-  p('pom-elephant', 'Fusil éléphant', 'Fusils', 269.5),
+  p('pom-elephant', 'Fusil éléphant', 'Fusils', 322),
   // Fusils à pompe
   p('pom-pump', 'Fusil à pompe', 'Fusils à pompe', 323.5),
   p('pom-double', 'Double canon', 'Fusils à pompe', 378.5),

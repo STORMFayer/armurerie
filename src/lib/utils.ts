@@ -18,9 +18,10 @@ export const fmtDate = (ts: number) =>
 
 export const orderNo = (n: number) => `N° ${String(n).padStart(4, '0')}`
 
-export function computeTotals(items: OrderItem[], discountPct: number, taxPct: number) {
+/** extraDiscount = remise en $ ajoutée à la remise en % (ex. remise partenaire). */
+export function computeTotals(items: OrderItem[], discountPct: number, taxPct: number, extraDiscount = 0) {
   const subtotal = round2(items.reduce((s, i) => s + i.price * i.qty, 0))
-  const discount = round2((subtotal * clamp(discountPct, 0, 100)) / 100)
+  const discount = Math.min(subtotal, round2((subtotal * clamp(discountPct, 0, 100)) / 100 + Math.max(0, extraDiscount)))
   const tax = round2(((subtotal - discount) * Math.max(0, taxPct)) / 100)
   const total = round2(subtotal - discount + tax)
   return { subtotal, discount, tax, total }

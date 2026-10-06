@@ -32,7 +32,8 @@ export function Receipt({ order }: { order: Order }) {
 
       <div className="mt-3 space-y-0.5 border-t border-dashed border-[#1a130d]/25 pt-2 text-sm">
         <Line label="Sous-total" value={money(order.subtotal)} />
-        {order.discount > 0 && <Line label={`Remise ${order.discountPct}%`} value={`− ${money(order.discount)}`} />}
+        {!!order.partnerName && !!order.partnerDiscount && <Line label={`Partenaire ${order.partnerName}`} value={`− ${money(order.partnerDiscount)}`} />}
+        {order.discount - (order.partnerDiscount ?? 0) > 0.004 && <Line label={`Remise ${order.discountPct}%`} value={`− ${money(order.discount - (order.partnerDiscount ?? 0))}`} />}
         {order.tax > 0 && <Line label={`Taxe ${order.taxPct}%`} value={`+ ${money(order.tax)}`} />}
         <div className="flex items-baseline justify-between border-t-2 border-double border-[#1a130d]/25 pt-1 font-western text-3xl tracking-[.04em]">
           <span>TOTAL</span>

@@ -3,16 +3,19 @@ import { persist } from 'zustand/middleware'
 import { db, fetchAll, hasDb } from './db'
 import { SEED_PRODUCTS } from './seed'
 import type { Client, Order, OrderItem, OrderStatus, Product, Settings } from './types'
-import { computeTotals, round2, uid } from './utils'
+import { cartTotals, useExtras } from './extras'
+import { round2, uid } from './utils'
 
 export interface Cart {
   clientId: string | null
   items: OrderItem[]
   discountPct: number
   note: string
+  /** partenaire dont la remise s'applique (Saloon…) */
+  partnerId?: string | null
 }
 
-const emptyCart = (): Cart => ({ clientId: null, items: [], discountPct: 0, note: '' })
+const emptyCart = (): Cart => ({ clientId: null, items: [], discountPct: 0, note: '', partnerId: null })
 
 interface State {
   products: Product[]
@@ -143,10 +146,10 @@ export const useStore = create<State>()(
       clearCart: () => set({ cart: emptyCart() }),
 
       checkout: async (status, received) => {
-        const { cart, clients, settings, nextOrderNumber } = get()
+        const { cart, clients, settings, nextOrderNumber, products } = get()
         if (!cart.items.length) return null
         const client = clients.find((c) => c.id === cart.clientId)
-        const totals = computeTotals(cart.items, cart.discountPct, settings.taxPct)
+        const { partner, partnerDiscount, ...totals } = cartTotals(cart, products, settings, useExtras.getState().partners)
         const paid = status === 'payee' || status === 'livree'
         const draft: Order = {
           id: uid(),
@@ -162,6 +165,8 @@ export const useStore = create<State>()(
           status,
           note: cart.note,
           createdAt: Date.now(),
+          partnerName: partner?.name ?? null,
+          partnerDiscount,
         }
         let order = draft
         if (hasDb) {
