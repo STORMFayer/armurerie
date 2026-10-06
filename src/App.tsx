@@ -19,6 +19,7 @@ import Crieur from '@/pages/Crieur'
 import Stock from '@/pages/Stock'
 import Compta from '@/pages/Compta'
 import { isCritical, subscribeStock, useStock } from '@/lib/stock'
+import { subscribeLedger, useLedger } from '@/lib/ledger'
 import { subscribeExtras, useExtras } from '@/lib/extras'
 import { useUi, type TabId } from '@/lib/ui'
 import { FxBoundary } from '@/components/fx/FxBoundary'
@@ -67,7 +68,11 @@ export default function App() {
     const loadStock = useStock.getState().load
     loadStock()
     const offStock = subscribeStock(loadStock)
+    const loadLedger = useLedger.getState().load
+    loadLedger()
+    const offLedger = subscribeLedger(loadLedger)
     return () => {
+      offLedger()
       off()
       offExtras()
       offStock()

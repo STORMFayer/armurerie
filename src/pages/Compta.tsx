@@ -1,5 +1,7 @@
 import { Calculator, Coins, Landmark, Percent, TrendingUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { ChartCard, HBars } from '@/components/compta/Charts'
+import { Journal } from '@/components/compta/Journal'
 import { Panel, Stat } from '@/components/ui'
 import { hasCostSheet, unitCost, useStock } from '@/lib/stock'
 import { useStore } from '@/lib/store'
@@ -59,6 +61,9 @@ export default function Compta() {
 
   return (
     <div className="space-y-5">
+      <Journal />
+
+      <h2 className="pt-3 font-western text-[30px] tracking-[.08em]">RENTABILITÉ</h2>
       <div className="flex flex-wrap gap-1.5">
         {PERIODS.map((p) => (
           <button
@@ -79,6 +84,15 @@ export default function Compta() {
         <Stat label="Coûts de fabrication" value={money(d.cost)} sub="Taxes admin + matières" icon={<Landmark size={24} />} />
         <Stat label="Bénéfice net" value={money(d.profit)} sub={d.estimated ? 'Certaines anciennes ventes estimées' : 'Ventes payées / livrées'} icon={<TrendingUp size={24} />} />
         <Stat label="Marge" value={`${d.margin.toFixed(1)} %`} sub="Bénéfice / chiffre d'affaires" icon={<Percent size={24} />} />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard title="Articles les plus rentables" subtitle="Bénéfice sur la période">
+          <HBars rows={d.rows.map((r) => ({ label: r.name, value: r.gross - r.cost }))} />
+        </ChartCard>
+        <ChartCard title="Meilleures marges unitaires" subtitle="Prix de vente − coût de fabrication">
+          <HBars rows={sheets.map(({ p, m }) => ({ label: p.name, value: m }))} />
+        </ChartCard>
       </div>
 
       <Panel title="Détail par article" icon={<Calculator />}>

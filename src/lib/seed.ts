@@ -1,11 +1,12 @@
 import type { Category, Product } from './types'
 
-const p = (id: string, name: string, category: Category, price: number, image = true): Product => ({
+const p = (id: string, name: string, category: Category, price: number, image = true, craftTax = 0): Product => ({
   id,
   name,
   category,
   price,
-  stock: null, // pas de gestion de stock
+  stock: null, // stock géré par matières (onglet Stock)
+  craftTax,
   image: image ? `img/items/${id}.png` : undefined, // icônes du jeu (public/img/items)
 })
 
@@ -73,11 +74,11 @@ const BASE: Product[] = [
   p('cus-lunette-moyenne', 'Lunette moyenne', 'Personnalisation', 120, false),
   p('cus-lunette-grande', 'Lunette grande', 'Personnalisation', 140, false),
   // Personnalisation — améliorations mécaniques (canon, rayure, viseur…) selon le prix de l'arme
-  p('cus-meca-1', 'Amélioration mécanique — arme 0 à 50 $', 'Personnalisation', 4.5, false),
-  p('cus-meca-2', 'Amélioration mécanique — arme 50 à 100 $', 'Personnalisation', 7, false),
-  p('cus-meca-3', 'Amélioration mécanique — arme 100 à 200 $', 'Personnalisation', 10, false),
-  p('cus-meca-4', 'Amélioration mécanique — arme 200 à 300 $', 'Personnalisation', 15, false),
-  p('cus-meca-5', 'Amélioration mécanique — arme 300 $ et plus', 'Personnalisation', 20, false),
+  p('cus-meca-1', 'Amélioration mécanique — arme 0 à 50 $', 'Personnalisation', 4.5, false, 4),
+  p('cus-meca-2', 'Amélioration mécanique — arme 50 à 100 $', 'Personnalisation', 7, false, 4),
+  p('cus-meca-3', 'Amélioration mécanique — arme 100 à 200 $', 'Personnalisation', 10, false, 4),
+  p('cus-meca-4', 'Amélioration mécanique — arme 200 à 300 $', 'Personnalisation', 15, false, 4),
+  p('cus-meca-5', 'Amélioration mécanique — arme 300 $ et plus', 'Personnalisation', 20, false, 4),
 ]
 
 // Fiches de fabrication en jeu : frais admin / taxes + matières (voir onglet Stock)
