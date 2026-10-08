@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
 import { BalanceChart, ChartCard, FlowBars } from './Charts'
+import { useRachat } from '@/lib/rachat'
 import { buildJournal, KIND_LABEL, periodRange, useLedger, type Period } from '@/lib/ledger'
 import { useStore } from '@/lib/store'
 import { cn, fmtDate, money, normName, toNum } from '@/lib/utils'
@@ -21,7 +22,8 @@ export function Journal() {
   const [dialog, setDialog] = useState<Dialog>(null)
   const { ask, dialog: confirmDialog } = useConfirm()
 
-  const journal = useMemo(() => buildJournal(orders, products, entries), [orders, products, entries])
+  const buybacks = useRachat((s) => s.items)
+  const journal = useMemo(() => buildJournal(orders, products, entries, buybacks), [orders, products, entries, buybacks])
   const balance = journal.at(-1)?.balance ?? 0
   const range = periodRange(period, offset)
   const rows = journal

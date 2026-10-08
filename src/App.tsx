@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BookOpen, Coins, Crosshair, Download, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator, Megaphone } from 'lucide-react'
+import { BookOpen, Coins, Crosshair, Download, ScrollText, Settings2, Upload, Users, Handshake, Ticket, AlertTriangle, Boxes, Calculator, Megaphone, Repeat } from 'lucide-react'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { Button, Field, Modal, useConfirm } from '@/components/ui'
@@ -17,6 +17,8 @@ import Tombola from '@/pages/Tombola'
 import Crieur from '@/pages/Crieur'
 import Stock from '@/pages/Stock'
 import Compta from '@/pages/Compta'
+import Rachat from '@/pages/Rachat'
+import { subscribeRachat, useRachat } from '@/lib/rachat'
 import { isCritical, subscribeStock, useStock } from '@/lib/stock'
 import { subscribeLedger, useLedger } from '@/lib/ledger'
 import { subscribeStaff, useStaff } from '@/lib/staff'
@@ -34,6 +36,7 @@ const TABS: { id: TabId; label: string; icon: ReactNode; page: () => ReactNode }
   { id: 'caisse', label: 'Caisse', icon: <Coins size={18} />, page: () => <Caisse /> },
   { id: 'partenaires', label: 'Partenaires', icon: <Handshake size={18} />, page: () => <Partenaires /> },
   { id: 'commandes', label: 'Commandes', icon: <ScrollText size={18} />, page: () => <Commandes /> },
+  { id: 'rachat', label: 'Rachat', icon: <Repeat size={18} />, page: () => <Rachat /> },
   { id: 'clients', label: 'Clients', icon: <Users size={18} />, page: () => <Clients /> },
   { id: 'catalogue', label: 'Catalogue', icon: <Crosshair size={18} />, page: () => <Catalogue /> },
   { id: 'stock', label: 'Stock', icon: <Boxes size={18} />, page: () => <Stock /> },
@@ -72,7 +75,11 @@ export default function App() {
     const loadStaff = useStaff.getState().load
     loadStaff()
     const offStaff = subscribeStaff(loadStaff)
+    const loadRachat = useRachat.getState().load
+    loadRachat()
+    const offRachat = subscribeRachat(loadRachat)
     return () => {
+      offRachat()
       offStaff()
       offLedger()
       off()

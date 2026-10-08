@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from './db'
+import type { Buyback } from './rachat'
 import type { Order, Product } from './types'
 import { orderNo, round2, uid } from './utils'
 
@@ -8,7 +9,7 @@ import { orderNo, round2, uid } from './utils'
  * Lignes manuelles (table armurerie_ledger) : dépôts, retraits, ajustements du solde sur le relevé en jeu.
  */
 
-export type LedgerKind = 'depot' | 'retrait' | 'ajustement' | 'vente' | 'taxe'
+export type LedgerKind = 'depot' | 'retrait' | 'ajustement' | 'vente' | 'taxe' | 'rachat' | 'revente'
 
 export interface LedgerEntry {
   id: string
@@ -26,6 +27,8 @@ export const KIND_LABEL: Record<LedgerKind, string> = {
   ajustement: 'Ajustement',
   vente: 'Vente',
   taxe: 'Frais admin / Taxes',
+  rachat: 'Rachat',
+  revente: 'Revente occasion',
 }
 
 const TABLE = 'armurerie_ledger'
@@ -90,8 +93,14 @@ export function subscribeLedger(onChange: () => void) {
 }
 
 /** Toutes les lignes (auto + manuelles), triées par date, avec le solde courant après chaque ligne. */
-export function buildJournal(orders: Order[], products: Product[], manual: LedgerEntry[]) {
+export function buildJournal(orders: Order[], products: Product[], manual: LedgerEntry[], buybacks: Buyback[] = []) {
   const auto: LedgerEntry[] = []
+  // armes d'occasion : rachat (−) puis revente (+)
+  for (const b of buybacks) {
+    auto.push({ id: `r-${b.id}`, kind: 'rachat', author: b.boughtBy ?? '—', label: `Rachat ${b.name} à ${b.boughtFrom}`, amount: -b.buyPrice, createdAt: b.boughtAt, manual: false })
+    if (b.soldAt != null)
+      auto.push({ id: `rv-${b.id}`, kind: 'revente', author: b.soldBy ?? '—', label: `Revente ${b.name} (occasion) à ${b.soldTo ?? '—'}`, amount: b.soldPrice ?? 0, createdAt: b.soldAt, manual: false })
+  }
   for (const o of orders) {
     if (o.status !== 'payee' && o.status !== 'livree') continue
     auto.push({
