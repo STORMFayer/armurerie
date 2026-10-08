@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { ChartCard, HBars } from '@/components/compta/Charts'
 import { Journal } from '@/components/compta/Journal'
 import { Panel, Stat } from '@/components/ui'
+import { useRachat } from '@/lib/rachat'
 import { hasCostSheet, unitCost, useStock } from '@/lib/stock'
 import { useStore } from '@/lib/store'
 import { cn, money } from '@/lib/utils'
@@ -17,6 +18,7 @@ const PERIODS = [
 export default function Compta() {
   const { orders, products } = useStore()
   const materials = useStock((s) => s.materials)
+  const buybacks = useRachat((s) => s.items)
   const [period, setPeriod] = useState<(typeof PERIODS)[number]['id']>('7')
 
   const d = useMemo(() => {
@@ -44,14 +46,31 @@ export default function Compta() {
         byProduct.set(i.productId, row)
       }
     }
+    // reventes d'armes d'occasion : coût = prix de rachat
+    const resales = buybacks.filter((b) => b.soldAt != null && b.soldAt >= start)
+    let resaleProfit = 0
+    for (const b of resales) {
+      const sold = b.soldPrice ?? 0
+      revenue += sold
+      cost += b.buyPrice
+      resaleProfit += sold - b.buyPrice
+      const key = `occ-${b.productId ?? b.name}`
+      const row = byProduct.get(key) ?? { name: `${b.name} (occasion)`, qty: 0, gross: 0, cost: 0, unknown: false }
+      row.qty += 1
+      row.gross += sold
+      row.cost += b.buyPrice
+      byProduct.set(key, row)
+    }
     // ventes par vendeur (montant encaissé)
     const bySeller = new Map<string, number>()
-    for (const o of sales) bySeller.set(o.seller ?? 'Non renseigné', (bySeller.get(o.seller ?? 'Non renseigné') ?? 0) + o.total)
+    const addSeller = (name: string | null | undefined, v: number) => bySeller.set(name ?? 'Non renseigné', (bySeller.get(name ?? 'Non renseigné') ?? 0) + v)
+    for (const o of sales) addSeller(o.seller, o.total)
+    for (const b of resales) addSeller(b.soldBy, b.soldPrice ?? 0)
     const sellers = [...bySeller].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
     const profit = revenue - cost
     const rows = [...byProduct.values()].sort((a, b) => b.gross - b.cost - (a.gross - a.cost))
-    return { sellers, count: sales.length, revenue, discounts, cost, profit, margin: revenue ? (profit / revenue) * 100 : 0, rows, estimated }
-  }, [orders, products, materials, period])
+    return { sellers, resaleCount: resales.length, resaleProfit, count: sales.length, revenue, discounts, cost, profit, margin: revenue ? (profit / revenue) * 100 : 0, rows, estimated }
+  }, [orders, products, materials, buybacks, period])
 
   // marge unitaire de chaque article ayant une fiche de fabrication
   const sheets = products
@@ -84,9 +103,9 @@ export default function Compta() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Chiffre d'affaires" value={money(d.revenue)} sub={`${d.count} vente(s) · remises ${money(d.discounts)}`} icon={<Coins size={24} />} />
-        <Stat label="Coûts de fabrication" value={money(d.cost)} sub="Taxes admin + matières" icon={<Landmark size={24} />} />
-        <Stat label="Bénéfice net" value={money(d.profit)} sub={d.estimated ? 'Certaines anciennes ventes estimées' : 'Ventes payées / livrées'} icon={<TrendingUp size={24} />} />
+        <Stat label="Chiffre d'affaires" value={money(d.revenue)} sub={`${d.count} vente(s)${d.resaleCount ? ` + ${d.resaleCount} revente(s)` : ''} · remises ${money(d.discounts)}`} icon={<Coins size={24} />} />
+        <Stat label="Coûts de fabrication" value={money(d.cost)} sub={d.resaleCount ? 'Taxes admin + matières + rachats' : 'Taxes admin + matières'} icon={<Landmark size={24} />} />
+        <Stat label="Bénéfice net" value={money(d.profit)} sub={d.resaleCount ? `dont occasion ${money(d.resaleProfit)}` : d.estimated ? 'Certaines anciennes ventes estimées' : 'Ventes payées / livrées'} icon={<TrendingUp size={24} />} />
         <Stat label="Marge" value={`${d.margin.toFixed(1)} %`} sub="Bénéfice / chiffre d'affaires" icon={<Percent size={24} />} />
       </div>
 
