@@ -29,6 +29,55 @@ function WeaponIcon({ product, className }: { product?: Product; className?: str
   )
 }
 
+/** Choix de l'arme : recherche + catégories + vignettes avec icône. */
+function WeaponPicker({ weapons, onPick }: { weapons: Product[]; onPick: (id: string) => void }) {
+  const [q, setQ] = useState('')
+  const [cat, setCat] = useState<string>('Toutes')
+  const list = weapons.filter((w) => (cat === 'Toutes' || w.category === cat) && (!q || normName(w.name).includes(normName(q))))
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/20 p-2.5">
+      <div className="relative">
+        <Search className="absolute top-1/2 left-3 -translate-y-1/2 text-sepia" size={15} />
+        <input className="field py-1.5 pl-9" placeholder="Chercher une arme…" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {['Toutes', ...WEAPON_CATEGORIES].map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => setCat(c)}
+            className={cn(
+              'cursor-pointer rounded-full border px-2.5 py-0.5 text-[13px] transition',
+              cat === c ? 'border-blood bg-blood text-white' : 'border-white/10 text-sepia hover:bg-white/[.06] hover:text-ink',
+            )}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      <ul className="scroll-thin mt-2 max-h-72 space-y-1 overflow-y-auto pr-1">
+        {list.map((w) => (
+          <li key={w.id}>
+            <button
+              type="button"
+              onClick={() => onPick(w.id)}
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-1.5 py-1 text-left transition hover:border-white/15 hover:bg-white/[.05]"
+            >
+              <WeaponIcon product={w} className="size-9" />
+              <span className="min-w-0 flex-1 truncate text-[15.5px]">{w.name}</span>
+              <span className="text-right leading-tight">
+                <span className="block font-type text-[17px] text-blood">{money(buyPriceFor(w.price))}</span>
+                <span className="block text-[11.5px] text-sepia">neuf {money(w.price)}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+        {list.length === 0 && <li className="py-4 text-center text-sepia italic">Aucune arme trouvée.</li>}
+      </ul>
+    </div>
+  )
+}
+
 /** Formulaire « Racheter une arme ». */
 function BuyForm({ weapons }: { weapons: Product[] }) {
   const buy = useRachat((s) => s.buy)
@@ -67,41 +116,27 @@ function BuyForm({ weapons }: { weapons: Product[] }) {
 
   return (
     <form onSubmit={submit} className="space-y-3">
-      <Field label="Arme rachetée *">
-        <select className="field cursor-pointer [&_option]:bg-[#17110d]" value={productId} onChange={(e) => pick(e.target.value)}>
-          <option value="">— Choisir l’arme —</option>
-          {WEAPON_CATEGORIES.map((c) => (
-            <optgroup key={c} label={c}>
-              {weapons
-                .filter((w) => w.category === c)
-                .map((w) => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} — neuf {money(w.price)}
-                  </option>
-                ))}
-            </optgroup>
-          ))}
-        </select>
-      </Field>
-      {product && (
-        <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/25 p-3">
-          <WeaponIcon product={product} />
-          <div className="grid flex-1 grid-cols-3 gap-2 text-center">
-            <p>
-              <span className="block text-[12.5px] text-sepia">Prix neuf</span>
-              <span className="font-type text-xl">{money(product.price)}</span>
-            </p>
-            <p>
-              <span className="block text-[12.5px] text-sepia">Rachat {pct(BUY_RATE)}</span>
-              <span className="font-type text-xl text-blood">{money(buyPriceFor(product.price))}</span>
-            </p>
-            <p>
-              <span className="block text-[12.5px] text-sepia">Revente {pct(SELL_RATE)}</span>
-              <span className="font-type text-xl text-brass">{money(sellPriceFor(product.price))}</span>
-            </p>
+      <div>
+        <span className="mb-1.5 block font-sc text-[15px] tracking-[.14em] text-sepia">Arme rachetée *</span>
+        {product ? (
+          <div className="flex items-center gap-3 rounded-xl border border-blood/50 bg-black/25 p-3">
+            <WeaponIcon product={product} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[17px]">{product.name}</p>
+              <div className="mt-0.5 flex flex-wrap gap-x-3 text-[13.5px] whitespace-nowrap">
+                <span className="text-sepia">neuf {money(product.price)}</span>
+                <span className="text-blood">rachat {money(buyPriceFor(product.price))}</span>
+                <span className="text-brass">revente {money(sellPriceFor(product.price))}</span>
+              </div>
+            </div>
+            <Button type="button" size="sm" variant="ghost" onClick={() => pick('')}>
+              Changer
+            </Button>
           </div>
-        </div>
-      )}
+        ) : (
+          <WeaponPicker weapons={weapons} onPick={pick} />
+        )}
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Prix payé ($)" hint="Modifiable si l’arme est abîmée.">
           <input className="field" inputMode="decimal" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} disabled={!product} />
